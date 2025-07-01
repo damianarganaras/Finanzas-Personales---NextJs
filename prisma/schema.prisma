@@ -46,7 +46,7 @@ model UserGroup {
 // Tipos de cuenta
 model AccountType {
   id       String    @id @default(cuid())
-  type     String    // asset, expense, revenue, liability
+  type     String    @unique // asset, expense, revenue, liability
   name     String
   accounts Account[]
   

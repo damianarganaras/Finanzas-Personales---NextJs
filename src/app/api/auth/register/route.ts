@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Crear usuario
-    await db.user.create({
+    const newUser = await db.user.create({
       data: {
         name,
         email,
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Crear tipos de cuenta por defecto
+    // Crear tipos de cuenta por defecto si no existen
     const accountTypes = [
       { type: 'asset', name: 'Activos' },
       { type: 'expense', name: 'Gastos' },
@@ -59,13 +59,19 @@ export async function POST(request: NextRequest) {
       { type: 'liability', name: 'Pasivos' },
     ];
 
-    await db.accountType.createMany({
-      data: accountTypes,
-    });
+    for (const accountType of accountTypes) {
+      await db.accountType.upsert({
+        where: { type: accountType.type },
+        update: {},
+        create: accountType,
+      });
+    }
 
-    // Crear moneda por defecto
-    await db.currency.create({
-      data: {
+    // Crear moneda por defecto si no existe
+    await db.currency.upsert({
+      where: { code: 'USD' },
+      update: {},
+      create: {
         code: 'USD',
         name: 'Dólar Estadounidense',
         symbol: '$',
@@ -73,7 +79,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { message: 'Usuario creado exitosamente' },
+      { message: 'Usuario creado exitosamente', userId: newUser.id },
       { status: 201 }
     );
   } catch (error) {
