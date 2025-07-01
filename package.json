@@ -8,7 +8,16 @@
     "start": "next start",
     "lint": "next lint",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed-complete": "tsx prisma/seed-complete.ts"
+    "db:seed-complete": "tsx prisma/seed-complete.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch",
+    "test:db": "vitest run src/test/database.test.ts src/test/database-constraints.test.ts",
+    "test:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-test-db.ps1",
+    "test:setup-bash": "bash ./scripts/setup-test-db.sh",
+    "db:test-reset": "DATABASE_URL=\"mysql://root:@localhost:3306/firefly_test\" npx prisma migrate reset --force"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
@@ -45,15 +54,22 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@next/env": "^15.3.4",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/ui": "^3.2.4",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
+    "jsdom": "^26.1.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
     "tw-animate-css": "^1.3.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
