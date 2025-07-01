@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Firefly III Next.js - Sistema de Gestión Financiera Personal
 
-## Getting Started
+Un sistema completo de gestión financiera personal construido con Next.js 15, TypeScript, Prisma y MySQL.
 
-First, run the development server:
+## 🚀 Características Principales
+
+- ✅ **Autenticación completa** - Login/Registro con NextAuth.js
+- ✅ **Dashboard interactivo** - Resumen financiero en tiempo real
+- ✅ **Gestión de cuentas** - Activos, pasivos, gastos e ingresos
+- ✅ **Transacciones** - Crear, editar y categorizar movimientos
+- ✅ **Presupuestos** - Control y seguimiento de gastos
+- ✅ **Facturas** - Gestión de pagos recurrentes
+- ✅ **Metas de ahorro** - Objetivos financieros
+- ✅ **Reportes** - Análisis y visualización de datos
+- ✅ **Configuración** - Personalización completa
+
+## 🔑 Credenciales de Prueba
+
+- **Email**: admin@firefly.local
+- **Contraseña**: admin123
+
+## 🛠️ Stack Tecnológico
+
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS
+- **UI Components**: Shadcn/ui, Radix UI
+- **Base de datos**: MySQL con Prisma ORM
+- **Autenticación**: NextAuth.js v5
+- **Validaciones**: Zod
+- **Estado global**: Zustand
+- **Formularios**: React Hook Form
+- **Gráficos**: Recharts
+- **Iconos**: Lucide React
+
+## 🚀 Inicio Rápido
 
 ```bash
+# Instalar dependencias
+npm install
+
+# Crear base de datos y tablas
+npx prisma db push
+
+# Insertar datos de ejemplo
+npm run db:seed-complete
+
+# Iniciar servidor de desarrollo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Luego visita http://localhost:3000 y usa las credenciales de prueba arriba.

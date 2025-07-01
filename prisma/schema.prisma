@@ -1,0 +1,295 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Users y autenticación
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  password    String
+  verified    Boolean  @default(false)
+  userGroupId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userGroup            UserGroup             @relation(fields: [userGroupId], references: [id])
+  accounts             Account[]
+  transactionJournals  TransactionJournal[]
+  budgets              Budget[]
+  categories           Category[]
+  tags                 Tag[]
+  bills                Bill[]
+  piggyBanks           PiggyBank[]
+  rules                Rule[]
+  attachments          Attachment[]
+  
+  @@map("users")
+}
+
+model UserGroup {
+  id    String @id @default(cuid())
+  title String
+  users User[]
+  
+  @@map("user_groups")
+}
+
+// Tipos de cuenta
+model AccountType {
+  id       String    @id @default(cuid())
+  type     String    // asset, expense, revenue, liability
+  name     String
+  accounts Account[]
+  
+  @@map("account_types")
+}
+
+// Cuentas
+model Account {
+  id              String      @id @default(cuid())
+  name            String
+  accountTypeId   String
+  virtualBalance  Decimal?    @db.Decimal(15, 2)
+  iban            String?
+  active          Boolean     @default(true)
+  userId          String
+  userGroupId     String
+  currencyId      String      @default("1")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  accountType     AccountType @relation(fields: [accountTypeId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
+  currency        Currency    @relation(fields: [currencyId], references: [id])
+  transactions    Transaction[]
+  
+  @@map("accounts")
+}
+
+// Monedas
+model Currency {
+  id     String @id @default(cuid())
+  code   String @unique // USD, EUR, etc.
+  name   String
+  symbol String
+  
+  accounts Account[]
+  
+  @@map("currencies")
+}
+
+// Transacciones agrupadas
+model TransactionJournal {
+  id          String   @id @default(cuid())
+  userId      String
+  description String
+  date        DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  
+  @@map("transaction_journals")
+}
+
+// Transacciones individuales
+model Transaction {
+  id                    String   @id @default(cuid())
+  accountId             String
+  transactionJournalId  String
+  amount                Decimal  @db.Decimal(15, 2)
+  description           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  account              Account           @relation(fields: [accountId], references: [id])
+  transactionJournal   TransactionJournal @relation(fields: [transactionJournalId], references: [id])
+  categories           TransactionCategory[]
+  tags                 TransactionTag[]
+  
+  @@map("transactions")
+}
+
+// Categorías
+model Category {
+  id     String @id @default(cuid())
+  name   String
+  userId String
+  
+  user         User                   @relation(fields: [userId], references: [id])
+  transactions TransactionCategory[]
+  budgets      BudgetCategory[]
+  
+  @@map("categories")
+}
+
+// Relación many-to-many entre transacciones y categorías
+model TransactionCategory {
+  transactionId String
+  categoryId    String
+  
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  category    Category    @relation(fields: [categoryId], references: [id])
+  
+  @@id([transactionId, categoryId])
+  @@map("transaction_categories")
+}
+
+// Etiquetas
+model Tag {
+  id     String @id @default(cuid())
+  name   String
+  userId String
+  
+  user         User           @relation(fields: [userId], references: [id])
+  transactions TransactionTag[]
+  
+  @@map("tags")
+}
+
+// Relación many-to-many entre transacciones y etiquetas
+model TransactionTag {
+  transactionId String
+  tagId         String
+  
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  tag         Tag         @relation(fields: [tagId], references: [id])
+  
+  @@id([transactionId, tagId])
+  @@map("transaction_tags")
+}
+
+// Presupuestos
+model Budget {
+  id     String @id @default(cuid())
+  name   String
+  active Boolean @default(true)
+  userId String
+  
+  user       User             @relation(fields: [userId], references: [id])
+  limits     BudgetLimit[]
+  categories BudgetCategory[]
+  
+  @@map("budgets")
+}
+
+// Límites de presupuesto
+model BudgetLimit {
+  id        String   @id @default(cuid())
+  budgetId  String
+  amount    Decimal  @db.Decimal(15, 2)
+  startDate DateTime
+  endDate   DateTime
+  
+  budget    Budget @relation(fields: [budgetId], references: [id])
+  
+  @@map("budget_limits")
+}
+
+// Relación many-to-many entre presupuestos y categorías
+model BudgetCategory {
+  budgetId   String
+  categoryId String
+  
+  budget   Budget   @relation(fields: [budgetId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  
+  @@id([budgetId, categoryId])
+  @@map("budget_categories")
+}
+
+// Facturas recurrentes
+model Bill {
+  id           String   @id @default(cuid())
+  name         String
+  amount       Decimal  @db.Decimal(15, 2)
+  frequency    String   // monthly, weekly, yearly, etc.
+  nextDueDate  DateTime
+  active       Boolean  @default(true)
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@map("bills")
+}
+
+// Metas de ahorro (Piggy Banks)
+model PiggyBank {
+  id          String   @id @default(cuid())
+  name        String
+  targetAmount Decimal @db.Decimal(15, 2)
+  currentAmount Decimal @db.Decimal(15, 2) @default(0)
+  targetDate  DateTime?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@map("piggy_banks")
+}
+
+// Reglas de automatización
+model Rule {
+  id     String @id @default(cuid())
+  title  String
+  active Boolean @default(true)
+  userId String
+  
+  user      User         @relation(fields: [userId], references: [id])
+  triggers  RuleTrigger[]
+  actions   RuleAction[]
+  
+  @@map("rules")
+}
+
+// Triggers de reglas
+model RuleTrigger {
+  id    String @id @default(cuid())
+  ruleId String
+  type  String // description_contains, amount_greater_than, etc.
+  value String
+  
+  rule Rule @relation(fields: [ruleId], references: [id])
+  
+  @@map("rule_triggers")
+}
+
+// Acciones de reglas
+model RuleAction {
+  id     String @id @default(cuid())
+  ruleId String
+  type   String // set_category, set_tag, etc.
+  value  String
+  
+  rule Rule @relation(fields: [ruleId], references: [id])
+  
+  @@map("rule_actions")
+}
+
+// Archivos adjuntos
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  userId       String
+  createdAt    DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@map("attachments")
+}
