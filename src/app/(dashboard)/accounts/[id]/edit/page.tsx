@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { accountSchema, type AccountFormData } from '@/lib/validations';
 import { useCurrencies } from '@/hooks/use-currencies';
 import { useAccountTypes } from '@/hooks/use-account-types';
+import { useUpdateAccount, useAccountById } from '@/hooks/use-accounts';
 
 // Funciones auxiliares para tipos de cuenta
 function getAccountTypeName(type: string): string {
@@ -45,13 +47,22 @@ function getAccountTypeDescription(type: string): string {
   return descriptions[type] || '';
 }
 
-export default function CreateAccountPage() {
-  const [isLoading, setIsLoading] = useState(false);
+interface EditAccountPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+}
+
+export default function EditAccountPage({ params }: EditAccountPageProps) {
+  const resolvedParams = React.use(params);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   
   // Cargar datos desde la API
+  const { data: account, isLoading: accountLoading, error: accountError } = useAccountById(resolvedParams.id);
   const { currencies, loading: currenciesLoading, error: currenciesError } = useCurrencies();
   const { accountTypes, loading: accountTypesLoading, error: accountTypesError } = useAccountTypes();
+  const updateAccountMutation = useUpdateAccount();
 
   const form = useForm<AccountFormData>({
     resolver: zodResolver(accountSchema),
@@ -65,59 +76,124 @@ export default function CreateAccountPage() {
     },
   });
 
-  // Establecer moneda por defecto cuando se carguen las monedas
+  // Llenar el formulario cuando se cargue la cuenta
   useEffect(() => {
-    if (currencies.length > 0 && !form.getValues('currencyId')) {
-      const defaultCurrency = currencies.find(c => c.code === 'ARS') || currencies[0];
-      form.setValue('currencyId', defaultCurrency.id);
+    if (account) {
+      form.reset({
+        name: account.name,
+        accountTypeId: account.accountTypeId,
+        virtualBalance: account.virtualBalance ? Number(account.virtualBalance) : undefined,
+        iban: account.iban || '',
+        active: account.active,
+        currencyId: account.currencyId,
+      });
     }
-  }, [currencies, form]);
+  }, [account, form]);
 
   async function onSubmit(data: AccountFormData) {
+    if (!account) return;
+    
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/accounts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
+      await updateAccountMutation.mutateAsync({
+        id: account.id,
+        ...data
       });
-
-      if (response.ok) {
-        router.push('/accounts');
-        router.refresh();
-      } else {
-        const errorData = await response.json();
-        form.setError('root', {
-          type: 'manual',
-          message: errorData.message || 'Error al crear la cuenta',
-        });
-      }
-    } catch {
+      
+      toast.success(`Cuenta "${data.name}" actualizada correctamente`);
+      router.push(`/accounts/${account.id}`);
+      router.refresh();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al actualizar la cuenta';
+      toast.error(errorMessage);
       form.setError('root', {
         type: 'manual',
-        message: 'Ocurrió un error. Inténtalo de nuevo.',
+        message: errorMessage,
       });
     } finally {
       setIsLoading(false);
     }
   }
 
+  if (accountLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <div className="h-9 w-20 bg-gray-200 rounded animate-pulse" />
+          <div>
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2" />
+            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="max-w-2xl">
+          <Card>
+            <CardHeader>
+              <div className="h-6 w-40 bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="h-4 w-64 bg-gray-200 rounded animate-pulse" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-10 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (accountError || !account) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/accounts">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Error</h1>
+            <p className="text-muted-foreground">
+              No se pudo cargar la cuenta
+            </p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-red-600 mb-4">
+                {accountError instanceof Error ? accountError.message : 'Cuenta no encontrada'}
+              </p>
+              <Button asChild>
+                <Link href="/accounts">Volver a Cuentas</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
         <Button variant="outline" size="sm" asChild>
-          <Link href="/accounts">
+          <Link href={`/accounts/${account.id}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver
           </Link>
         </Button>
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Nueva Cuenta</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Editar Cuenta</h1>
           <p className="text-muted-foreground">
-            Crea una nueva cuenta financiera
+            Modifica los datos de "{account.name}"
           </p>
         </div>
       </div>
@@ -127,7 +203,7 @@ export default function CreateAccountPage() {
           <CardHeader>
             <CardTitle>Información de la Cuenta</CardTitle>
             <CardDescription>
-              Completa los datos para crear tu nueva cuenta
+              Actualiza los datos de tu cuenta financiera
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -165,7 +241,7 @@ export default function CreateAccountPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Tipo de Cuenta</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger disabled={isLoading || accountTypesLoading}>
                             <SelectValue placeholder={
@@ -201,7 +277,7 @@ export default function CreateAccountPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Moneda</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger disabled={isLoading || currenciesLoading}>
                             <SelectValue placeholder={
@@ -229,7 +305,7 @@ export default function CreateAccountPage() {
                   name="virtualBalance"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Balance Inicial (Opcional)</FormLabel>
+                      <FormLabel>Balance Actual</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -250,7 +326,7 @@ export default function CreateAccountPage() {
                   name="iban"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>IBAN (Opcional)</FormLabel>
+                      <FormLabel>IBAN / Número de Cuenta (Opcional)</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Número de cuenta o IBAN"
@@ -293,10 +369,11 @@ export default function CreateAccountPage() {
 
                 <div className="flex gap-4">
                   <Button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Creando...' : 'Crear Cuenta'}
+                    <Save className="mr-2 h-4 w-4" />
+                    {isLoading ? 'Guardando...' : 'Guardar Cambios'}
                   </Button>
                   <Button type="button" variant="outline" asChild>
-                    <Link href="/accounts">Cancelar</Link>
+                    <Link href={`/accounts/${account.id}`}>Cancelar</Link>
                   </Button>
                 </div>
               </form>

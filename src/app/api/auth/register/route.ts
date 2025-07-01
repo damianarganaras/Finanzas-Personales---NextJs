@@ -67,14 +67,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Crear moneda por defecto si no existe
+    // Crear moneda por defecto si no existe (Peso Argentino)
+    await db.currency.upsert({
+      where: { code: 'ARS' },
+      update: {},
+      create: {
+        code: 'ARS',
+        name: 'Peso Argentino',
+        symbol: '$',
+      },
+    });
+
+    // También crear USD como opción adicional
     await db.currency.upsert({
       where: { code: 'USD' },
       update: {},
       create: {
         code: 'USD',
         name: 'Dólar Estadounidense',
-        symbol: '$',
+        symbol: 'US$',
       },
     });
 

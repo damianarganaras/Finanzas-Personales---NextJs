@@ -39,13 +39,27 @@ export function useCreateAccount() {
   });
 }
 
+export function useAccountById(id: string) {
+  return useQuery<Account>({
+    queryKey: ['accounts', id],
+    queryFn: async () => {
+      const response = await fetch(`/api/accounts/${id}`);
+      if (!response.ok) {
+        throw new Error('Error al cargar la cuenta');
+      }
+      return response.json();
+    },
+    enabled: !!id,
+  });
+}
+
 export function useUpdateAccount() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<AccountFormData> }) => {
+    mutationFn: async ({ id, ...data }: { id: string } & AccountFormData) => {
       const response = await fetch(`/api/accounts/${id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -53,13 +67,15 @@ export function useUpdateAccount() {
       });
       
       if (!response.ok) {
-        throw new Error('Error al actualizar cuenta');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al actualizar la cuenta');
       }
       
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['accounts', data.id] });
     },
   });
 }
@@ -74,7 +90,8 @@ export function useDeleteAccount() {
       });
       
       if (!response.ok) {
-        throw new Error('Error al eliminar cuenta');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al eliminar cuenta');
       }
       
       return response.json();

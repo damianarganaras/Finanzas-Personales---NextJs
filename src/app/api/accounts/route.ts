@@ -60,27 +60,45 @@ export async function POST(request: NextRequest) {
 
     const { name, accountTypeId, virtualBalance, iban, active, currencyId } = validatedFields.data;
 
+    // Verificar que la moneda existe, si no se proporciona usar peso argentino por defecto
+    let currency;
+    
+    if (currencyId) {
+      currency = await db.currency.findUnique({
+        where: { id: currencyId },
+      });
+    }
+
+    if (!currency) {
+      // Buscar peso argentino o crearlo si no existe
+      currency = await db.currency.upsert({
+        where: { code: 'ARS' },
+        update: {},
+        create: {
+          code: 'ARS',
+          name: 'Peso Argentino',
+          symbol: '$',
+        },
+      });
+    }
+
     // Obtener o crear el tipo de cuenta
     let accountType = await db.accountType.findFirst({
       where: {
-        type: accountTypeId,
+        OR: [
+          { id: accountTypeId }, // Buscar por ID
+          { type: accountTypeId }, // Buscar por tipo exacto
+          { type: accountTypeId.toUpperCase() }, // Buscar por tipo en mayúsculas
+          { type: accountTypeId.toLowerCase() }, // Buscar por tipo en minúsculas
+        ],
       },
     });
 
     if (!accountType) {
-      const accountTypeNames = {
-        asset: 'Activos',
-        liability: 'Pasivos',
-        expense: 'Gastos',
-        revenue: 'Ingresos',
-      };
-      
-      accountType = await db.accountType.create({
-        data: {
-          type: accountTypeId,
-          name: accountTypeNames[accountTypeId as keyof typeof accountTypeNames] || accountTypeId,
-        },
-      });
+      return NextResponse.json(
+        { message: `Tipo de cuenta "${accountTypeId}" no encontrado` },
+        { status: 400 }
+      );
     }
 
     // Obtener el usuario con su grupo
@@ -105,7 +123,7 @@ export async function POST(request: NextRequest) {
         active,
         userId: session.user.id,
         userGroupId: user.userGroupId,
-        currencyId,
+        currencyId: currency.id, // Usar el ID de la moneda verificada
       },
       include: {
         accountType: true,

@@ -1,81 +1,10 @@
 import '@testing-library/jest-dom'
-import { beforeAll, afterAll, afterEach, vi } from 'vitest'
-import { PrismaClient } from '@prisma/client'
+import { vi } from 'vitest'
 
-// Configurar Prisma para tests con MySQL
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || "mysql://root:Damian123%23@localhost:3306/firefly_test"
-    }
-  }
-})
+// Mock global de fetch
+global.fetch = vi.fn()
 
-// Configuración global de tests
-beforeAll(async () => {
-  console.log('Setting up test database...')
-  
-  // Verificar conexión a la base de datos
-  try {
-    await prisma.$connect()
-    console.log('✅ Connected to test database')
-  } catch (error) {
-    console.error('❌ Failed to connect to test database:', error)
-    throw error
-  }
-})
-
-afterEach(async () => {
-  // Limpiar la base de datos después de cada test
-  // Para MySQL necesitamos desactivar las foreign key checks temporalmente
-  await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 0;`
-  
-  // Limpiar todas las tablas en orden (usando los nombres de tabla del esquema Prisma)
-  const tables = [
-    'transaction_categories',
-    'transaction_tags', 
-    'budget_categories',
-    'rule_actions',
-    'rule_triggers',
-    'transactions',
-    'transaction_journals',
-    'budget_limits',
-    'budgets',
-    'accounts',
-    'currencies',
-    'account_types',
-    'tags',
-    'categories',
-    'piggy_banks',
-    'bills',
-    'rules',
-    'attachments',
-    'users',
-    'user_groups'
-  ]
-
-  for (const table of tables) {
-    try {
-      await prisma.$executeRawUnsafe(`DELETE FROM ${table};`)
-      await prisma.$executeRawUnsafe(`ALTER TABLE ${table} AUTO_INCREMENT = 1;`)
-    } catch (error) {
-      // Ignorar errores de tablas que no existen
-      console.log(`Could not clear table ${table}:`, error)
-    }
-  }
-  
-  // Reactivar foreign key checks
-  await prisma.$executeRaw`SET FOREIGN_KEY_CHECKS = 1;`
-})
-
-afterAll(async () => {
-  await prisma.$disconnect()
-})
-
-// Exportar prisma para uso en tests
-export { prisma }
-
-// Mock para Next.js router
+// Mock de Next.js router
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -87,9 +16,11 @@ vi.mock('next/navigation', () => ({
   }),
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => '/',
+  redirect: vi.fn(),
+  notFound: vi.fn(),
 }))
 
-// Mock para NextAuth
+// Mock de NextAuth
 vi.mock('next-auth/react', () => ({
   useSession: () => ({
     data: null,
@@ -97,4 +28,130 @@ vi.mock('next-auth/react', () => ({
   }),
   signIn: vi.fn(),
   signOut: vi.fn(),
+  getSession: vi.fn(),
 }))
+
+// Mock de la función auth
+vi.mock('@/lib/auth', () => ({
+  auth: vi.fn()
+}))
+
+// Mock de Prisma Client para tests unitarios
+vi.mock('@/lib/db', () => ({
+  db: {
+    user: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    account: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    accountType: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      upsert: vi.fn(),
+    },
+    currency: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      upsert: vi.fn(),
+    },
+    transaction: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      count: vi.fn(),
+    },
+    transactionJournal: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    category: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    budget: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+    userGroup: {
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+  }
+}))
+
+// Configuración global para tests
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
+
+// Mock de Web APIs
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  })),
+})
+
+// Mock de localStorage
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+  },
+  writable: true,
+})
+
+// Mock de sessionStorage
+Object.defineProperty(window, 'sessionStorage', {
+  value: {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+  },
+  writable: true,
+})

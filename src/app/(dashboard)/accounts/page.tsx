@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AccountsList } from '@/components/accounts/accounts-list';
 
 function AccountsSkeleton() {
   return (
@@ -40,8 +41,7 @@ function AccountsSkeleton() {
   );
 }
 
-async function AccountsContent() {
-  // Por ahora mostraremos un estado vacío
+export default function AccountsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -59,36 +59,9 @@ async function AccountsContent() {
         </Button>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Tus Cuentas</CardTitle>
-          <CardDescription>
-            Lista de todas tus cuentas financieras
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-12">
-            <div className="text-muted-foreground mb-4">
-              <p>No tienes cuentas registradas aún.</p>
-              <p className="text-sm">Comienza creando tu primera cuenta financiera.</p>
-            </div>
-            <Button asChild>
-              <Link href="/accounts/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Crear Primera Cuenta
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Suspense fallback={<AccountsSkeleton />}>
+        <AccountsList />
+      </Suspense>
     </div>
-  );
-}
-
-export default function AccountsPage() {
-  return (
-    <Suspense fallback={<AccountsSkeleton />}>
-      <AccountsContent />
-    </Suspense>
   );
 }

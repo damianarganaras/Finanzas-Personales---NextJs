@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 import { loadEnvConfig } from '@next/env'
 import path from 'path'
 
-// Load Next.js environment variables and test environment
+// Load Next.js environment variables
 loadEnvConfig(process.cwd())
 
 export default defineConfig({
@@ -11,20 +11,18 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    env: {
-      // Load test environment variables
-      DATABASE_URL: "mysql://root:Damian123%23@localhost:3306/firefly_test",
-      NEXTAUTH_URL: "http://localhost:3000",
-      NEXTAUTH_SECRET: "test-secret-key-for-development-only"
-    },
     css: true,
-    // Run tests in sequence to avoid database conflicts
-    pool: 'forks',
+    // Configuración para tests unitarios
+    pool: 'threads',
     poolOptions: {
-      forks: {
-        singleFork: true
+      threads: {
+        singleThread: false,
       }
     },
+    // Mock de APIs externas por defecto
+    mockReset: true,
+    clearMocks: true,
+    restoreMocks: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
