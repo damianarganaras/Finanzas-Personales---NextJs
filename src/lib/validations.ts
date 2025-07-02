@@ -31,8 +31,8 @@ export const transactionSchema = z.object({
   date: z.date(),
   sourceAccountId: z.string().optional(),
   destinationAccountId: z.string().optional(),
-  categoryIds: z.array(z.string()).default([]),
-  tagIds: z.array(z.string()).default([]),
+  categoryIds: z.array(z.string()).optional().default([]),
+  tagIds: z.array(z.string()).optional().default([]),
   notes: z.string().optional(),
 }).refine((data) => {
   if (data.type === 'withdrawal' && !data.sourceAccountId) {

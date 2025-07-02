@@ -6,11 +6,37 @@ export interface Transaction {
   description?: string;
   createdAt: Date;
   updatedAt: Date;
+
+  // Campos adicionales para la vista completa de transacciones
+  type?: TransactionType;
+  date?: Date;
+  sourceAccountId?: string;
+  destinationAccountId?: string;
+  notes?: string;
+
+  // Relaciones
   account: {
     id: string;
     name: string;
     accountType: {
       type: string;
+      name?: string;
+    };
+  };
+  sourceAccount?: {
+    id: string;
+    name: string;
+    accountType: {
+      type: string;
+      name?: string;
+    };
+  };
+  destinationAccount?: {
+    id: string;
+    name: string;
+    accountType: {
+      type: string;
+      name?: string;
     };
   };
   transactionJournal: TransactionJournal;

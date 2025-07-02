@@ -231,18 +231,43 @@ async function main() {
     }
   ]
 
-  for (const transaction of transactions) {
+  for (const transactionData of transactions) {
     try {
-      await prisma.transaction.create({
+      // Create TransactionJournal first
+      const journal = await prisma.transactionJournal.create({
         data: {
-          ...transaction,
           userId: adminUser.id,
-          userGroupId: userGroup.id
+          description: transactionData.description,
+          date: transactionData.date,
         }
-      })
-      console.log(`✅ Transacción ${transaction.description} creada`)
+      });
+
+      // Create individual transactions for source and destination accounts
+      if (transactionData.sourceAccountId) {
+        await prisma.transaction.create({
+          data: {
+            accountId: transactionData.sourceAccountId,
+            transactionJournalId: journal.id,
+            amount: -Math.abs(transactionData.amount), // Negative for source (withdrawal)
+            description: transactionData.description,
+          }
+        });
+      }
+
+      if (transactionData.destinationAccountId) {
+        await prisma.transaction.create({
+          data: {
+            accountId: transactionData.destinationAccountId,
+            transactionJournalId: journal.id,
+            amount: Math.abs(transactionData.amount), // Positive for destination
+            description: transactionData.description,
+          }
+        });
+      }
+
+      console.log(`✅ Transacción ${transactionData.description} creada`)
     } catch (e) {
-      console.log(`ℹ️ Transacción ${transaction.description} ya existe`)
+      console.log(`ℹ️ Transacción ${transactionData.description} ya existe o error: ${e}`)
     }
   }
 

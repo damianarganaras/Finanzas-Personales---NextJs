@@ -17,3 +17,23 @@ export interface AccountType {
   name?: string;
   description?: string;
 }
+
+// Tipos para categorías
+export interface Category {
+  id: string;
+  name: string;
+  userId: string;
+  userGroupId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Tipos para tags/etiquetas
+export interface Tag {
+  id: string;
+  name: string;
+  userId: string;
+  userGroupId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

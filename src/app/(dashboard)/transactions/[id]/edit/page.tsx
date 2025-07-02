@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -33,11 +33,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useTags, useCreateTag } from '@/hooks/use-tags';
-import { useCreateTransaction } from '@/hooks/use-transactions';
+import { useTransactionById, useUpdateTransaction } from '@/hooks/use-transactions';
 import type { Category, Tag } from '@/types';
 
-// Esquema local simplificado para evitar conflictos de tipos
-const formSchema = z.object({
+// Esquema para edición de transacciones
+const editFormSchema = z.object({
   type: z.enum(['withdrawal', 'deposit', 'transfer']),
   description: z.string().min(1, 'La descripción es requerida'),
   amount: z.number().positive('El monto debe ser positivo'),
@@ -49,28 +49,32 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+type EditFormData = z.infer<typeof editFormSchema>;
 
-export default function CreateTransactionPage() {
+export default function EditTransactionPage() {
+  const params = useParams();
   const router = useRouter();
+  const transactionId = params.id as string;
+
   const [transactionType, setTransactionType] = useState<'withdrawal' | 'deposit' | 'transfer'>('withdrawal');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newTagName, setNewTagName] = useState('');
 
+  const { data: transaction, isLoading: transactionLoading, error: transactionError } = useTransactionById(transactionId);
   const { accounts, loading: accountsLoading } = useAccounts();
   const { categories, loading: categoriesLoading } = useCategories();
   const { tags, loading: tagsLoading } = useTags();
   
-  const createTransactionMutation = useCreateTransaction();
+  const updateTransactionMutation = useUpdateTransaction();
   const createCategoryMutation = useCreateCategory();
   const createTagMutation = useCreateTag();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<EditFormData>({
+    resolver: zodResolver(editFormSchema),
     defaultValues: {
-      type: transactionType,
+      type: 'withdrawal',
       description: '',
       amount: 0,
       date: new Date(),
@@ -80,14 +84,37 @@ export default function CreateTransactionPage() {
     },
   });
 
-  // Actualizar el tipo cuando cambia el tab
+  // Cargar datos de la transacción cuando están disponibles
+  useEffect(() => {
+    if (transaction) {
+      setTransactionType(transaction.type as 'withdrawal' | 'deposit' | 'transfer');
+      
+      form.reset({
+        type: transaction.type as 'withdrawal' | 'deposit' | 'transfer',
+        description: transaction.description,
+        amount: Math.abs(Number(transaction.amount)), // Siempre positivo en el formulario
+        date: new Date(transaction.date),
+        sourceAccountId: transaction.sourceAccountId || undefined,
+        destinationAccountId: transaction.destinationAccountId || undefined,
+        categoryIds: transaction.categories?.map(c => c.id) || [],
+        tagIds: transaction.tags?.map(t => t.id) || [],
+        notes: transaction.notes || '',
+      });
+    }
+  }, [transaction, form]);
+
   const handleTabChange = (value: string) => {
     const newType = value as 'withdrawal' | 'deposit' | 'transfer';
     setTransactionType(newType);
     form.setValue('type', newType);
-    // Limpiar las cuentas seleccionadas al cambiar de tipo
-    form.setValue('sourceAccountId', undefined);
-    form.setValue('destinationAccountId', undefined);
+    
+    // Limpiar las cuentas seleccionadas al cambiar de tipo si no son compatibles
+    if (newType === 'deposit') {
+      form.setValue('sourceAccountId', undefined);
+    }
+    if (newType === 'withdrawal') {
+      form.setValue('destinationAccountId', undefined);
+    }
   };
 
   const handleCreateCategory = async () => {
@@ -116,7 +143,7 @@ export default function CreateTransactionPage() {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: EditFormData) => {
     try {
       // Validar que las cuentas requeridas estén seleccionadas
       if (data.type === 'withdrawal' && !data.sourceAccountId) {
@@ -134,24 +161,66 @@ export default function CreateTransactionPage() {
         return;
       }
 
-      await createTransactionMutation.mutateAsync({
+      await updateTransactionMutation.mutateAsync({
+        id: transactionId,
         ...data,
         categoryIds: data.categoryIds || [],
         tagIds: data.tagIds || [],
       });
       
-      toast.success('Transacción creada correctamente');
-      router.push('/dashboard/transactions');
-      router.refresh();
+      toast.success('Transacción actualizada correctamente');
+      router.push(`/dashboard/transactions/${transactionId}`);
     } catch (error) {
-      console.error('Error al crear transacción:', error);
+      console.error('Error al actualizar transacción:', error);
       toast.error(
         error instanceof Error 
           ? error.message 
-          : 'Error al crear la transacción'
+          : 'Error al actualizar la transacción'
       );
     }
   };
+
+  if (transactionLoading) {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="flex items-center space-x-4 mb-6">
+          <div className="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="space-y-6">
+          <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (transactionError || !transaction) {
+    return (
+      <div className="container mx-auto p-6 max-w-4xl">
+        <div className="flex items-center space-x-4 mb-6">
+          <Link href="/dashboard/transactions">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Volver
+            </Button>
+          </Link>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                Transacción no encontrada
+              </h2>
+              <p className="text-gray-600">
+                La transacción que intentas editar no existe o ha sido eliminada.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Filtrar cuentas según el tipo
   const assetAccounts = accounts.filter(account => 
@@ -163,16 +232,16 @@ export default function CreateTransactionPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard/transactions">
+          <Link href={`/dashboard/transactions/${transactionId}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Nueva Transacción</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Editar Transacción</h1>
             <p className="text-muted-foreground">
-              Registra un nuevo movimiento financiero
+              Modifica los detalles de la transacción
             </p>
           </div>
         </div>
@@ -185,7 +254,7 @@ export default function CreateTransactionPage() {
             <CardHeader>
               <CardTitle>Tipo de Transacción</CardTitle>
               <CardDescription>
-                Selecciona el tipo de movimiento que quieres registrar
+                Cambia el tipo de movimiento si es necesario
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -198,27 +267,27 @@ export default function CreateTransactionPage() {
 
                 <TabsContent value="withdrawal" className="space-y-4 mt-4">
                   <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <h3 className="font-medium text-red-900">Registrar un Gasto</h3>
+                    <h3 className="font-medium text-red-900">Editar un Gasto</h3>
                     <p className="text-sm text-red-700 mt-1">
-                      Registra dinero que sale de una de tus cuentas de activos
+                      Dinero que sale de una de tus cuentas de activos
                     </p>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="deposit" className="space-y-4 mt-4">
                   <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h3 className="font-medium text-green-900">Registrar un Ingreso</h3>
+                    <h3 className="font-medium text-green-900">Editar un Ingreso</h3>
                     <p className="text-sm text-green-700 mt-1">
-                      Registra dinero que entra a una de tus cuentas de activos
+                      Dinero que entra a una de tus cuentas de activos
                     </p>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="transfer" className="space-y-4 mt-4">
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="font-medium text-blue-900">Registrar una Transferencia</h3>
+                    <h3 className="font-medium text-blue-900">Editar una Transferencia</h3>
                     <p className="text-sm text-blue-700 mt-1">
-                      Mueve dinero entre dos de tus cuentas de activos
+                      Movimiento de dinero entre dos de tus cuentas de activos
                     </p>
                   </div>
                 </TabsContent>
@@ -231,7 +300,7 @@ export default function CreateTransactionPage() {
             <CardHeader>
               <CardTitle>Detalles de la Transacción</CardTitle>
               <CardDescription>
-                Información básica sobre la transacción
+                Modifica la información básica sobre la transacción
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -300,7 +369,7 @@ export default function CreateTransactionPage() {
             <CardHeader>
               <CardTitle>Cuentas</CardTitle>
               <CardDescription>
-                Selecciona las cuentas involucradas en la transacción
+                Modifica las cuentas involucradas en la transacción
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -315,7 +384,7 @@ export default function CreateTransactionPage() {
                         {transactionType === 'withdrawal' && ' (de donde sale el dinero)'}
                         {transactionType === 'transfer' && ' (cuenta origen)'}
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona una cuenta" />
@@ -346,7 +415,7 @@ export default function CreateTransactionPage() {
                         {transactionType === 'deposit' && ' (donde entra el dinero)'}
                         {transactionType === 'transfer' && ' (cuenta destino)'}
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona una cuenta" />
@@ -373,7 +442,7 @@ export default function CreateTransactionPage() {
             <CardHeader>
               <CardTitle>Categorización</CardTitle>
               <CardDescription>
-                Organiza tu transacción con categorías y etiquetas
+                Modifica las categorías y etiquetas de la transacción
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -566,7 +635,7 @@ export default function CreateTransactionPage() {
             <CardHeader>
               <CardTitle>Notas Adicionales</CardTitle>
               <CardDescription>
-                Información adicional sobre la transacción (opcional)
+                Modifica la información adicional sobre la transacción (opcional)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -591,17 +660,17 @@ export default function CreateTransactionPage() {
 
           {/* Botones de acción */}
           <div className="flex justify-end space-x-4">
-            <Link href="/dashboard/transactions">
+            <Link href={`/dashboard/transactions/${transactionId}`}>
               <Button variant="outline">
                 Cancelar
               </Button>
             </Link>
             <Button 
               type="submit" 
-              disabled={createTransactionMutation.isPending}
+              disabled={updateTransactionMutation.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
-              {createTransactionMutation.isPending ? 'Guardando...' : 'Guardar Transacción'}
+              {updateTransactionMutation.isPending ? 'Guardando...' : 'Guardar Cambios'}
             </Button>
           </div>
         </form>

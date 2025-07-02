@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { ArrowLeft, Save, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,27 +28,14 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { transactionSchema, type TransactionFormData } from '@/lib/validations';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useTags, useCreateTag } from '@/hooks/use-tags';
 import { useCreateTransaction } from '@/hooks/use-transactions';
 import type { Category, Tag } from '@/types';
-
-// Esquema local simplificado para evitar conflictos de tipos
-const formSchema = z.object({
-  type: z.enum(['withdrawal', 'deposit', 'transfer']),
-  description: z.string().min(1, 'La descripción es requerida'),
-  amount: z.number().positive('El monto debe ser positivo'),
-  date: z.date(),
-  sourceAccountId: z.string().optional(),
-  destinationAccountId: z.string().optional(),
-  categoryIds: z.array(z.string()),
-  tagIds: z.array(z.string()),
-  notes: z.string().optional(),
-});
-
-type FormData = z.infer<typeof formSchema>;
 
 export default function CreateTransactionPage() {
   const router = useRouter();
@@ -67,8 +53,8 @@ export default function CreateTransactionPage() {
   const createCategoryMutation = useCreateCategory();
   const createTagMutation = useCreateTag();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<TransactionFormData>({
+    resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: transactionType,
       description: '',
@@ -116,28 +102,11 @@ export default function CreateTransactionPage() {
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: TransactionFormData) => {
     try {
-      // Validar que las cuentas requeridas estén seleccionadas
-      if (data.type === 'withdrawal' && !data.sourceAccountId) {
-        toast.error('Debe seleccionar una cuenta de origen');
-        return;
-      }
-      
-      if (data.type === 'deposit' && !data.destinationAccountId) {
-        toast.error('Debe seleccionar una cuenta de destino');
-        return;
-      }
-      
-      if (data.type === 'transfer' && (!data.sourceAccountId || !data.destinationAccountId)) {
-        toast.error('Debe seleccionar tanto la cuenta de origen como la de destino');
-        return;
-      }
-
       await createTransactionMutation.mutateAsync({
         ...data,
-        categoryIds: data.categoryIds || [],
-        tagIds: data.tagIds || [],
+        type: transactionType,
       });
       
       toast.success('Transacción creada correctamente');
@@ -156,6 +125,14 @@ export default function CreateTransactionPage() {
   // Filtrar cuentas según el tipo
   const assetAccounts = accounts.filter(account => 
     account.accountType.type === 'asset'
+  );
+
+  const expenseAccounts = accounts.filter(account => 
+    account.accountType.type === 'expense'
+  );
+
+  const revenueAccounts = accounts.filter(account => 
+    account.accountType.type === 'revenue'
   );
 
   return (
@@ -284,7 +261,7 @@ export default function CreateTransactionPage() {
                       <Input
                         type="date"
                         {...field}
-                        value={field.value ? field.value.toISOString().split('T')[0] : ''}
+                        value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
                         onChange={(e) => field.onChange(new Date(e.target.value))}
                       />
                     </FormControl>
@@ -428,7 +405,7 @@ export default function CreateTransactionPage() {
                   render={() => (
                     <FormItem>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {categories.map((category: Category) => (
+                        {categories.map((category) => (
                           <FormField
                             key={category.id}
                             control={form.control}
@@ -519,7 +496,7 @@ export default function CreateTransactionPage() {
                   render={() => (
                     <FormItem>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {tags.map((tag: Tag) => (
+                        {tags.map((tag) => (
                           <FormField
                             key={tag.id}
                             control={form.control}

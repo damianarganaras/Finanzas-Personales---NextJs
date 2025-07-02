@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Account, AccountFormData } from '@/types';
 
 export function useAccounts() {
-  return useQuery<Account[]>({
+  const query = useQuery<Account[]>({
     queryKey: ['accounts'],
     queryFn: async () => {
       const response = await fetch('/api/accounts');
@@ -12,6 +12,13 @@ export function useAccounts() {
       return response.json();
     },
   });
+
+  return {
+    accounts: query.data || [],
+    loading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
+  };
 }
 
 export function useCreateAccount() {
