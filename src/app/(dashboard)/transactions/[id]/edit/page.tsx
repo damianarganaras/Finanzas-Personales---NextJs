@@ -42,11 +42,24 @@ const editFormSchema = z.object({
   description: z.string().min(1, 'La descripción es requerida'),
   amount: z.number().positive('El monto debe ser positivo'),
   date: z.date(),
-  sourceAccountId: z.string().optional(),
-  destinationAccountId: z.string().optional(),
+  sourceAccountId: z.string(),
+  destinationAccountId: z.string(),
   categoryIds: z.array(z.string()),
   tagIds: z.array(z.string()),
   notes: z.string().optional(),
+}).refine((data) => {
+  if (data.type === 'withdrawal' && !data.sourceAccountId) {
+    return false;
+  }
+  if (data.type === 'deposit' && !data.destinationAccountId) {
+    return false;
+  }
+  if (data.type === 'transfer' && (!data.sourceAccountId || !data.destinationAccountId)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Debe seleccionar las cuentas apropiadas según el tipo de transacción",
 });
 
 type EditFormData = z.infer<typeof editFormSchema>;
@@ -78,6 +91,8 @@ export default function EditTransactionPage() {
       description: '',
       amount: 0,
       date: new Date(),
+      sourceAccountId: '',
+      destinationAccountId: '',
       categoryIds: [],
       tagIds: [],
       notes: '',
@@ -94,8 +109,8 @@ export default function EditTransactionPage() {
         description: transaction.description,
         amount: Math.abs(Number(transaction.amount)), // Siempre positivo en el formulario
         date: new Date(transaction.date),
-        sourceAccountId: transaction.sourceAccountId || undefined,
-        destinationAccountId: transaction.destinationAccountId || undefined,
+        sourceAccountId: transaction.sourceAccountId || '',
+        destinationAccountId: transaction.destinationAccountId || '',
         categoryIds: transaction.categories?.map(c => c.id) || [],
         tagIds: transaction.tags?.map(t => t.id) || [],
         notes: transaction.notes || '',
@@ -393,7 +408,7 @@ export default function EditTransactionPage() {
                         <SelectContent>
                           {assetAccounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
-                              {account.name} ({account.currency.symbol} {account.virtualBalance?.toFixed(2) || '0.00'})
+                              {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -424,7 +439,7 @@ export default function EditTransactionPage() {
                         <SelectContent>
                           {assetAccounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
-                              {account.name} ({account.currency.symbol} {account.virtualBalance?.toFixed(2) || '0.00'})
+                              {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
                             </SelectItem>
                           ))}
                         </SelectContent>

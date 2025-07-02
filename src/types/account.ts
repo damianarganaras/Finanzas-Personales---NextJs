@@ -1,8 +1,10 @@
+import { Decimal } from '@prisma/client/runtime/library';
+
 export interface Account {
   id: string;
   name: string;
   accountTypeId: string;
-  virtualBalance?: number;
+  virtualBalance?: Decimal | null;
   iban?: string;
   active: boolean;
   userId: string;

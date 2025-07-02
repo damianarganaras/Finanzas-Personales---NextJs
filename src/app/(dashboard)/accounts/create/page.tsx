@@ -58,7 +58,7 @@ export default function CreateAccountPage() {
     defaultValues: {
       name: '',
       accountTypeId: '',
-      virtualBalance: undefined,
+      virtualBalance: 0,
       iban: '',
       active: true,
       currencyId: '',

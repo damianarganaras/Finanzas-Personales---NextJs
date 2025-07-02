@@ -69,7 +69,7 @@ export default function EditAccountPage({ params }: EditAccountPageProps) {
     defaultValues: {
       name: '',
       accountTypeId: '',
-      virtualBalance: undefined,
+      virtualBalance: 0,
       iban: '',
       active: true,
       currencyId: '',
@@ -82,10 +82,10 @@ export default function EditAccountPage({ params }: EditAccountPageProps) {
       form.reset({
         name: account.name,
         accountTypeId: account.accountTypeId,
-        virtualBalance: account.virtualBalance ? Number(account.virtualBalance) : undefined,
+        virtualBalance: account.virtualBalance ? Number(account.virtualBalance) : 0,
         iban: account.iban || '',
         active: account.active,
-        currencyId: account.currencyId,
+        currencyId: account.currencyId || '',
       });
     }
   }, [account, form]);

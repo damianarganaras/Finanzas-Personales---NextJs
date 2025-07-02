@@ -42,11 +42,24 @@ const formSchema = z.object({
   description: z.string().min(1, 'La descripción es requerida'),
   amount: z.number().positive('El monto debe ser positivo'),
   date: z.date(),
-  sourceAccountId: z.string().optional(),
-  destinationAccountId: z.string().optional(),
+  sourceAccountId: z.string(),
+  destinationAccountId: z.string(),
   categoryIds: z.array(z.string()),
   tagIds: z.array(z.string()),
   notes: z.string().optional(),
+}).refine((data) => {
+  if (data.type === 'withdrawal' && !data.sourceAccountId) {
+    return false;
+  }
+  if (data.type === 'deposit' && !data.destinationAccountId) {
+    return false;
+  }
+  if (data.type === 'transfer' && (!data.sourceAccountId || !data.destinationAccountId)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Debe seleccionar las cuentas apropiadas según el tipo de transacción",
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -74,6 +87,8 @@ export default function CreateTransactionPage() {
       description: '',
       amount: 0,
       date: new Date(),
+      sourceAccountId: '',
+      destinationAccountId: '',
       categoryIds: [],
       tagIds: [],
       notes: '',
@@ -86,8 +101,8 @@ export default function CreateTransactionPage() {
     setTransactionType(newType);
     form.setValue('type', newType);
     // Limpiar las cuentas seleccionadas al cambiar de tipo
-    form.setValue('sourceAccountId', undefined);
-    form.setValue('destinationAccountId', undefined);
+    form.setValue('sourceAccountId', '');
+    form.setValue('destinationAccountId', '');
   };
 
   const handleCreateCategory = async () => {
@@ -324,7 +339,7 @@ export default function CreateTransactionPage() {
                         <SelectContent>
                           {assetAccounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
-                              {account.name} ({account.currency.symbol} {account.virtualBalance?.toFixed(2) || '0.00'})
+                              {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -355,7 +370,7 @@ export default function CreateTransactionPage() {
                         <SelectContent>
                           {assetAccounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
-                              {account.name} ({account.currency.symbol} {account.virtualBalance?.toFixed(2) || '0.00'})
+                              {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
                             </SelectItem>
                           ))}
                         </SelectContent>

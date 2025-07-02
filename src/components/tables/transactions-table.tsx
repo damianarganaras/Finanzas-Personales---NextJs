@@ -86,7 +86,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground">No hay transacciones para mostrar</p>
-        <Link href="/dashboard/transactions/create">
+        <Link href="/transactions/create">
           <Button className="mt-4">
             Crear primera transacción
           </Button>

@@ -21,7 +21,7 @@ export const accountSchema = z.object({
   virtualBalance: z.number().optional(),
   iban: z.string().optional(),
   active: z.boolean(),
-  currencyId: z.string().optional(), // Hacer opcional para usar ARS por defecto
+  currencyId: z.string().min(1, 'La moneda es requerida').optional(),
 });
 
 export const transactionSchema = z.object({

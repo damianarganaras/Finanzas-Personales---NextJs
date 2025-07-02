@@ -190,7 +190,7 @@ async function AccountDetailsContent({ params }: { params: { id: string } }) {
               <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border">
                 <p className="text-sm font-medium text-muted-foreground mb-2">Balance Actual</p>
                 <p className="text-3xl font-bold text-blue-900">
-                  {account.currency.symbol}{account.virtualBalance.toString()}
+                  {account.currency.symbol}{Number(account.virtualBalance).toFixed(2)}
                 </p>
               </div>
             )}

@@ -82,7 +82,7 @@ export default function TransactionsPage() {
             Gestiona todos tus movimientos financieros
           </p>
         </div>
-        <Link href="/dashboard/transactions/create">
+        <Link href="/transactions/create">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
             Nueva Transacción

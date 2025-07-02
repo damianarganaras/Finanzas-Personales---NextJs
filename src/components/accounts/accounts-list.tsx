@@ -70,7 +70,7 @@ function AccountCard({ account }: { account: Account }) {
         <div className="space-y-2">
           {account.virtualBalance !== null && account.virtualBalance !== undefined && (
             <div className="text-2xl font-bold">
-              ${account.virtualBalance.toString()} {account.currency?.symbol || ''}
+              ${Number(account.virtualBalance).toFixed(2)} {account.currency?.symbol || ''}
             </div>
           )}
           {account.iban && (
