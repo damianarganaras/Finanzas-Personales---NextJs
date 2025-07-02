@@ -5,17 +5,23 @@ export function useAccounts() {
   const query = useQuery<Account[]>({
     queryKey: ['accounts'],
     queryFn: async () => {
+      console.log('Fetching accounts...');
       const response = await fetch('/api/accounts');
+      console.log('Response status:', response.status);
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
         throw new Error('Error al cargar cuentas');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Accounts data received:', data);
+      return data;
     },
   });
 
   return {
-    accounts: query.data || [],
-    loading: query.isLoading,
+    data: query.data || [],
+    isLoading: query.isLoading,
     error: query.error,
     refetch: query.refetch,
   };

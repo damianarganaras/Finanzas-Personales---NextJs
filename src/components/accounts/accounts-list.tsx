@@ -102,6 +102,14 @@ function AccountCard({ account }: { account: Account }) {
 export function AccountsList() {
   const { data: accounts, isLoading, error } = useAccounts();
 
+  // Debug logs
+  console.log('AccountsList Debug:', {
+    accounts,
+    accountsLength: accounts?.length,
+    isLoading,
+    error
+  });
+
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

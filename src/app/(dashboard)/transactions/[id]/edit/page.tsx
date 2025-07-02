@@ -76,7 +76,7 @@ export default function EditTransactionPage() {
   const [newTagName, setNewTagName] = useState('');
 
   const { data: transaction, isLoading: transactionLoading, error: transactionError } = useTransactionById(transactionId);
-  const { accounts, loading: accountsLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { categories, loading: categoriesLoading } = useCategories();
   const { tags, loading: tagsLoading } = useTags();
   

@@ -7,12 +7,17 @@ export async function GET() {
   try {
     const session = await auth();
     
+    console.log('Session in accounts API:', session);
+    
     if (!session?.user?.id) {
+      console.log('No user session found');
       return NextResponse.json(
         { message: 'No autorizado' },
         { status: 401 }
       );
     }
+
+    console.log('Fetching accounts for user:', session.user.id);
 
     const accounts = await db.account.findMany({
       where: {
@@ -26,6 +31,9 @@ export async function GET() {
         createdAt: 'desc',
       },
     });
+
+    console.log('Found accounts:', accounts.length);
+    console.log('Accounts data:', accounts);
 
     return NextResponse.json(accounts);
   } catch (error) {
