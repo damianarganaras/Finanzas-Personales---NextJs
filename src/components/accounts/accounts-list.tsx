@@ -2,48 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Wallet, CreditCard, Landmark, TrendingUp } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAccounts } from '@/hooks/use-accounts';
+import { getAccountTypeName, getAccountTypeColor } from '@/lib/account-types';
+import { getAccountTypeIcon } from '@/lib/account-type-helpers';
 import type { Account } from '@/types';
-
-function getAccountTypeIcon(type: string) {
-  switch (type) {
-    case 'asset':
-      return <Wallet className="h-5 w-5" />;
-    case 'liability':
-      return <CreditCard className="h-5 w-5" />;
-    case 'expense':
-      return <TrendingUp className="h-5 w-5" />;
-    case 'revenue':
-      return <Landmark className="h-5 w-5" />;
-    default:
-      return <Wallet className="h-5 w-5" />;
-  }
-}
-
-function getAccountTypeName(type: string) {
-  const names: Record<string, string> = {
-    asset: 'Activo',
-    liability: 'Pasivo',
-    expense: 'Gasto',
-    revenue: 'Ingreso'
-  };
-  return names[type] || type;
-}
-
-function getAccountTypeColor(type: string) {
-  const colors: Record<string, string> = {
-    asset: 'bg-green-100 text-green-800',
-    liability: 'bg-red-100 text-red-800',
-    expense: 'bg-orange-100 text-orange-800',
-    revenue: 'bg-blue-100 text-blue-800'
-  };
-  return colors[type] || 'bg-gray-100 text-gray-800';
-}
 
 function AccountCard({ account }: { account: Account }) {
   return (

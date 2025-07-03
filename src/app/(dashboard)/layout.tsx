@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   Menu,
+  CreditCard,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Cuentas', href: '/accounts', icon: Wallet },
   { name: 'Transacciones', href: '/transactions', icon: ArrowUpDown },
+  { name: 'Tarjetas de Crédito', href: '/credit-cards', icon: CreditCard },
   { name: 'Presupuestos', href: '/budgets', icon: Target },
   { name: 'Facturas', href: '/bills', icon: Receipt },
   { name: 'Metas de Ahorro', href: '/piggy-banks', icon: PiggyBank },

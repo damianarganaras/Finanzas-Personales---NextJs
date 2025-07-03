@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getAccountTypeName } from '@/lib/account-types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -131,11 +132,7 @@ export function TransactionsTable({ transactions }: TransactionsTableProps) {
                 <div className="flex flex-col">
                   <span className="font-medium">{transaction.account.name}</span>
                   <span className="text-sm text-muted-foreground capitalize">
-                    {transaction.account.accountType.type === 'asset' ? 'Activo' :
-                     transaction.account.accountType.type === 'expense' ? 'Gasto' :
-                     transaction.account.accountType.type === 'revenue' ? 'Ingreso' :
-                     transaction.account.accountType.type === 'liability' ? 'Pasivo' :
-                     transaction.account.accountType.type}
+                    {getAccountTypeName(transaction.account.accountType.type)}
                   </span>
                 </div>
               </TableCell>

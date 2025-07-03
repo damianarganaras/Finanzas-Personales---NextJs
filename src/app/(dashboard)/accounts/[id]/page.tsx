@@ -9,46 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { DeleteAccountButton } from '@/components/accounts/delete-account-button';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getAccountTypeName, getAccountTypeColor } from '@/lib/account-types';
+import { getAccountTypeIcon } from '@/lib/account-type-helpers';
 
 interface AccountDetailsProps {
   params: Promise<{
     id: string;
   }>;
-}
-
-function getAccountTypeIcon(type: string) {
-  switch (type) {
-    case 'asset':
-      return '💰';
-    case 'liability':
-      return '💳';
-    case 'expense':
-      return '📤';
-    case 'revenue':
-      return '📥';
-    default:
-      return '💰';
-  }
-}
-
-function getAccountTypeName(type: string) {
-  const names: Record<string, string> = {
-    asset: 'Activo',
-    liability: 'Pasivo',
-    expense: 'Gasto',
-    revenue: 'Ingreso'
-  };
-  return names[type] || type;
-}
-
-function getAccountTypeColor(type: string) {
-  const colors: Record<string, string> = {
-    asset: 'bg-green-100 text-green-800',
-    liability: 'bg-red-100 text-red-800',
-    expense: 'bg-orange-100 text-orange-800',
-    revenue: 'bg-blue-100 text-blue-800'
-  };
-  return colors[type] || 'bg-gray-100 text-gray-800';
 }
 
 async function AccountDetailsContent({ params }: { params: { id: string } }) {

@@ -66,7 +66,7 @@ export interface Tag {
   userId: string;
 }
 
-export type TransactionType = 'withdrawal' | 'deposit' | 'transfer';
+export type TransactionType = 'withdrawal' | 'deposit' | 'transfer' | 'credit_card_purchase' | 'installment_payment';
 
 export type TransactionFormData = {
   type: TransactionType;
@@ -78,4 +78,9 @@ export type TransactionFormData = {
   categoryIds: string[];
   tagIds: string[];
   notes?: string;
+  // Campos específicos para compras con tarjeta de crédito
+  creditCardId?: string;
+  installments?: number;
+  hasInterest?: boolean;
+  interestRate?: number;
 };

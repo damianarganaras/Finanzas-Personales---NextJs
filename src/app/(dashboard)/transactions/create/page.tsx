@@ -34,6 +34,7 @@ import { useAccounts } from '@/hooks/use-accounts';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useTags, useCreateTag } from '@/hooks/use-tags';
 import { useCreateTransaction } from '@/hooks/use-transactions';
+import { filterAccountsByType } from '@/lib/account-types';
 import type { Category, Tag } from '@/types';
 
 // Esquema local simplificado para evitar conflictos de tipos
@@ -156,7 +157,7 @@ export default function CreateTransactionPage() {
       });
       
       toast.success('Transacción creada correctamente');
-      router.push('/dashboard/transactions');
+      router.push('/transactions');
       router.refresh();
     } catch (error) {
       console.error('Error al crear transacción:', error);
@@ -169,16 +170,14 @@ export default function CreateTransactionPage() {
   };
 
   // Filtrar cuentas según el tipo
-  const assetAccounts = accounts.filter(account => 
-    account.accountType.type === 'asset'
-  );
+  const assetAccounts = filterAccountsByType(accounts, 'asset');
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard/transactions">
+          <Link href="/transactions">
             <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
@@ -319,66 +318,85 @@ export default function CreateTransactionPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {(transactionType === 'withdrawal' || transactionType === 'transfer') && (
-                <FormField
-                  control={form.control}
-                  name="sourceAccountId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Cuenta de origen *
-                        {transactionType === 'withdrawal' && ' (de donde sale el dinero)'}
-                        {transactionType === 'transfer' && ' (cuenta origen)'}
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una cuenta" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {assetAccounts.map((account) => (
-                            <SelectItem key={account.id} value={account.id}>
-                              {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+              {accountsLoading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-500">Cargando cuentas...</p>
+                </div>
+              ) : assetAccounts.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-gray-500">No se encontraron cuentas de activos.</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Total de cuentas: {accounts.length} | Cuentas de activos: {assetAccounts.length}
+                  </p>
+                  <Link href="/accounts/create" className="text-blue-600 hover:text-blue-800 text-sm">
+                    Crear nueva cuenta
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {(transactionType === 'withdrawal' || transactionType === 'transfer') && (
+                    <FormField
+                      control={form.control}
+                      name="sourceAccountId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Cuenta de origen *
+                            {transactionType === 'withdrawal' && ' (de donde sale el dinero)'}
+                            {transactionType === 'transfer' && ' (cuenta origen)'}
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una cuenta" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {assetAccounts.map((account) => (
+                                <SelectItem key={account.id} value={account.id}>
+                                  {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
-              )}
 
-              {(transactionType === 'deposit' || transactionType === 'transfer') && (
-                <FormField
-                  control={form.control}
-                  name="destinationAccountId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Cuenta de destino *
-                        {transactionType === 'deposit' && ' (donde entra el dinero)'}
-                        {transactionType === 'transfer' && ' (cuenta destino)'}
-                      </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecciona una cuenta" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {assetAccounts.map((account) => (
-                            <SelectItem key={account.id} value={account.id}>
-                              {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                  {(transactionType === 'deposit' || transactionType === 'transfer') && (
+                    <FormField
+                      control={form.control}
+                      name="destinationAccountId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Cuenta de destino *
+                            {transactionType === 'deposit' && ' (donde entra el dinero)'}
+                            {transactionType === 'transfer' && ' (cuenta destino)'}
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una cuenta" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {assetAccounts.map((account) => (
+                                <SelectItem key={account.id} value={account.id}>
+                                  {account.name} ({account.currency.symbol} {account.virtualBalance ? Number(account.virtualBalance).toFixed(2) : '0.00'})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   )}
-                />
+                </>
               )}
             </CardContent>
           </Card>
