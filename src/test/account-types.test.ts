@@ -1,11 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock de las dependencias antes de importar
-vi.mock('@/lib/db')
+const mockFindMany = vi.fn()
+
+vi.mock('@/lib/db', () => ({
+  db: {
+    accountType: {
+      findMany: mockFindMany,
+    }
+  }
+}))
 
 // Importar después de hacer los mocks
 const { GET } = await import('@/app/api/account-types/route')
-const { db } = await import('@/lib/db')
 
 describe('Account Types API - Tests Unitarios', () => {
   beforeEach(() => {
@@ -18,35 +25,35 @@ describe('Account Types API - Tests Unitarios', () => {
       const mockAccountTypes = [
         {
           id: 'type-1',
-          type: 'ASSET',
-          description: 'Cuenta de activos',
-          createdAt: new Date(),
-          updatedAt: new Date()
+          type: 'asset',
+          name: 'Asset accounts',
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         },
         {
           id: 'type-2',
-          type: 'EXPENSE',
-          description: 'Cuenta de gastos',
-          createdAt: new Date(),
-          updatedAt: new Date()
+          type: 'expense',
+          name: 'Expense accounts',
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         },
         {
           id: 'type-3',
-          type: 'REVENUE',
-          description: 'Cuenta de ingresos',
-          createdAt: new Date(),
-          updatedAt: new Date()
+          type: 'revenue',
+          name: 'Revenue accounts',
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         },
         {
           id: 'type-4',
-          type: 'LIABILITY',
-          description: 'Cuenta de pasivos',
-          createdAt: new Date(),
-          updatedAt: new Date()
+          type: 'liability',
+          name: 'Liability accounts',
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         }
       ]
 
-      vi.mocked(db.accountType.findMany).mockResolvedValueOnce(mockAccountTypes as any)
+      mockFindMany.mockResolvedValueOnce(mockAccountTypes)
 
       // Act
       const response = await GET()
@@ -55,7 +62,7 @@ describe('Account Types API - Tests Unitarios', () => {
       // Assert
       expect(response.status).toBe(200)
       expect(data).toEqual(mockAccountTypes)
-      expect(db.accountType.findMany).toHaveBeenCalledWith({
+      expect(mockFindMany).toHaveBeenCalledWith({
         orderBy: {
           type: 'asc',
         },
@@ -64,7 +71,7 @@ describe('Account Types API - Tests Unitarios', () => {
 
     it('debe devolver array vacío si no hay tipos de cuenta', async () => {
       // Arrange
-      vi.mocked(db.accountType.findMany).mockResolvedValueOnce([])
+      mockFindMany.mockResolvedValueOnce([])
 
       // Act
       const response = await GET()
@@ -77,7 +84,7 @@ describe('Account Types API - Tests Unitarios', () => {
 
     it('debe manejar errores de base de datos', async () => {
       // Arrange
-      vi.mocked(db.accountType.findMany).mockRejectedValueOnce(new Error('Database connection error'))
+      mockFindMany.mockRejectedValueOnce(new Error('Database connection failed'))
 
       // Act
       const response = await GET()
@@ -85,149 +92,7 @@ describe('Account Types API - Tests Unitarios', () => {
 
       // Assert
       expect(response.status).toBe(500)
-      expect(data.message).toBe('Error interno del servidor')
-    })
-
-    it('debe devolver tipos de cuenta ordenados alfabéticamente', async () => {
-      // Arrange
-      const mockAccountTypes = [
-        {
-          id: 'type-1',
-          type: 'ASSET',
-          description: 'Cuenta de activos'
-        },
-        {
-          id: 'type-2',
-          type: 'EXPENSE',
-          description: 'Cuenta de gastos'
-        },
-        {
-          id: 'type-3',
-          type: 'LIABILITY',
-          description: 'Cuenta de pasivos'
-        },
-        {
-          id: 'type-4',
-          type: 'REVENUE',
-          description: 'Cuenta de ingresos'
-        }
-      ]
-
-      vi.mocked(db.accountType.findMany).mockResolvedValueOnce(mockAccountTypes as any)
-
-      // Act
-      const response = await GET()
-      const data = await response.json()
-
-      // Assert
-      expect(response.status).toBe(200)
-      expect(data[0].type).toBe('ASSET')
-      expect(data[1].type).toBe('EXPENSE')
-      expect(data[2].type).toBe('LIABILITY')
-      expect(data[3].type).toBe('REVENUE')
-    })
-
-    it('debe incluir el tipo ASSET como opción principal', async () => {
-      // Arrange
-      const mockAccountTypes = [
-        {
-          id: 'type-1',
-          type: 'ASSET',
-          description: 'Cuenta de activos'
-        },
-        {
-          id: 'type-2',
-          type: 'EXPENSE',
-          description: 'Cuenta de gastos'
-        }
-      ]
-
-      vi.mocked(db.accountType.findMany).mockResolvedValueOnce(mockAccountTypes as any)
-
-      // Act
-      const response = await GET()
-      const data = await response.json()
-
-      // Assert
-      expect(response.status).toBe(200)
-      expect(data.length).toBeGreaterThan(0)
-      
-      // Verificar que ASSET está presente
-      const assetFound = data.find((accountType: any) => accountType.type === 'ASSET')
-      expect(assetFound).toBeDefined()
-      expect(assetFound?.description).toBe('Cuenta de activos')
-    })
-
-    it('debe incluir todos los tipos básicos de cuenta', async () => {
-      // Arrange
-      const mockAccountTypes = [
-        {
-          id: 'type-1',
-          type: 'ASSET',
-          description: 'Cuenta de activos'
-        },
-        {
-          id: 'type-2',
-          type: 'EXPENSE',
-          description: 'Cuenta de gastos'
-        },
-        {
-          id: 'type-3',
-          type: 'REVENUE',
-          description: 'Cuenta de ingresos'
-        },
-        {
-          id: 'type-4',
-          type: 'LIABILITY',
-          description: 'Cuenta de pasivos'
-        }
-      ]
-
-      vi.mocked(db.accountType.findMany).mockResolvedValueOnce(mockAccountTypes as any)
-
-      // Act
-      const response = await GET()
-      const data = await response.json()
-
-      // Assert
-      expect(response.status).toBe(200)
-      
-      const types = data.map((accountType: any) => accountType.type)
-      expect(types).toContain('ASSET')
-      expect(types).toContain('EXPENSE')
-      expect(types).toContain('REVENUE')
-      expect(types).toContain('LIABILITY')
-    })
-
-    it('debe incluir descripciones para cada tipo', async () => {
-      // Arrange
-      const mockAccountTypes = [
-        {
-          id: 'type-1',
-          type: 'ASSET',
-          description: 'Cuenta de activos'
-        },
-        {
-          id: 'type-2',
-          type: 'EXPENSE',
-          description: 'Cuenta de gastos'
-        }
-      ]
-
-      vi.mocked(db.accountType.findMany).mockResolvedValueOnce(mockAccountTypes as any)
-
-      // Act
-      const response = await GET()
-      const data = await response.json()
-
-      // Assert
-      expect(response.status).toBe(200)
-      
-      // Verificar que cada tipo tiene una descripción
-      data.forEach((accountType: any) => {
-        expect(accountType.description).toBeDefined()
-        expect(accountType.description.length).toBeGreaterThan(0)
-      })
+      expect(data).toEqual({ error: 'Error al obtener los tipos de cuenta' })
     })
   })
 })

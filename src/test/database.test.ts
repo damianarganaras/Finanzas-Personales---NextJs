@@ -1,13 +1,8 @@
 import { describe, test, expect, beforeEach } from 'vitest'
-import { prisma } from '../test/setup'
-import { PrismaClient } from '@prisma/client'
+import { testPrisma, setupDatabaseTests } from './integration-setup'
 
 describe('Database Schema Validation', () => {
-  let testPrisma: PrismaClient
-
-  beforeEach(() => {
-    testPrisma = prisma
-  })
+  setupDatabaseTests()
 
   describe('User and UserGroup Models', () => {
     test('should create user group successfully', async () => {

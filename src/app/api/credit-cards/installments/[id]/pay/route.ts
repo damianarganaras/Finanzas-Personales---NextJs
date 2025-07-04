@@ -3,9 +3,9 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Verificar que la cuota existe y pertenece al usuario
     const installment = await db.installmentPayment.findFirst({

@@ -1,8 +1,18 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
+import { PrismaClient } from '@prisma/client'
 
 // Mock global de fetch
 global.fetch = vi.fn()
+
+// Prisma client para tests de integración (solo si no es un test unitario)
+export const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL
+    }
+  }
+})
 
 // Mock de Next.js router
 vi.mock('next/navigation', () => ({
@@ -37,77 +47,54 @@ vi.mock('@/lib/auth', () => ({
 }))
 
 // Mock de Prisma Client para tests unitarios
-vi.mock('@/lib/db', () => ({
-  db: {
-    user: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      count: vi.fn(),
-    },
-    account: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      count: vi.fn(),
-    },
-    accountType: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      create: vi.fn(),
-      upsert: vi.fn(),
-    },
-    currency: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
-      create: vi.fn(),
-      upsert: vi.fn(),
-    },
-    transaction: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      count: vi.fn(),
-    },
-    transactionJournal: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    category: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    budget: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    userGroup: {
-      findUnique: vi.fn(),
-      findMany: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
+const createMockMethods = () => ({
+  findUnique: vi.fn(),
+  findMany: vi.fn(),
+  findFirst: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
+  delete: vi.fn(),
+  upsert: vi.fn(),
+  count: vi.fn(),
+  deleteMany: vi.fn(),
+  createMany: vi.fn(),
+  updateMany: vi.fn(),
+})
+
+// Mock condicional - solo para tests unitarios que requieren mock
+vi.mock('@/lib/db', async () => {
+  const actual = await vi.importActual('@/lib/db')
+  
+  // Si es un test de integración, usa el cliente real
+  if (process.env.VITEST_INTEGRATION_TEST) {
+    return actual
   }
-}))
+  
+  // Para tests unitarios, usa el mock
+  return {
+    db: {
+      user: createMockMethods(),
+      account: createMockMethods(),
+      accountType: createMockMethods(),
+      currency: createMockMethods(),
+      transaction: createMockMethods(),
+      transactionJournal: createMockMethods(),
+      category: createMockMethods(),
+      tag: createMockMethods(),
+      budget: createMockMethods(),
+      budgetLimit: createMockMethods(),
+      piggyBank: createMockMethods(),
+      bill: createMockMethods(),
+      userGroup: createMockMethods(),
+      creditCard: createMockMethods(),
+      creditCardPurchase: createMockMethods(),
+      installmentPayment: createMockMethods(),
+      $connect: vi.fn(),
+      $disconnect: vi.fn(),
+      $transaction: vi.fn(),
+    }
+  }
+})
 
 // Configuración global para tests
 Object.defineProperty(window, 'matchMedia', {

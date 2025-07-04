@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useCreditCards, useCreditCardPurchases, useInstallmentPayments } from '@/hooks/use-credit-cards';
 
 // Mock fetch
@@ -120,7 +120,9 @@ describe('useCreditCards', () => {
       accountId: 'account2',
     };
 
-    await result.current.createCreditCard(formData);
+    await act(async () => {
+      await result.current.createCreditCard(formData);
+    });
 
     expect(mockFetch).toHaveBeenCalledWith('/api/credit-cards', {
       method: 'POST',
@@ -240,7 +242,9 @@ describe('useInstallmentPayments', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    await result.current.payInstallment('1');
+    await act(async () => {
+      await result.current.payInstallment('1');
+    });
 
     expect(mockFetch).toHaveBeenCalledWith('/api/credit-cards/installments/1/pay', {
       method: 'POST',

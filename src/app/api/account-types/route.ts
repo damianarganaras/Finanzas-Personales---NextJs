@@ -13,7 +13,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error al obtener tipos de cuenta:', error);
     return NextResponse.json(
-      { message: 'Error interno del servidor' },
+      { error: 'Error al obtener los tipos de cuenta' },
       { status: 500 }
     );
   }

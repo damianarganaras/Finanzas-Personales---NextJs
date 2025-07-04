@@ -1,35 +1,22 @@
 import { describe, test, expect, beforeEach } from 'vitest'
-import { prisma } from '../test/setup'
-import { PrismaClient } from '@prisma/client'
+import { testPrisma, setupDatabaseTests } from './integration-setup'
+import { TestDataFactory } from './test-data-factory'
 
 describe('Database Constraints and Data Types', () => {
-  let testPrisma: PrismaClient
+  setupDatabaseTests()
+  
+  let factory: TestDataFactory
 
   beforeEach(() => {
-    testPrisma = prisma
+    factory = new TestDataFactory(testPrisma)
   })
 
   describe('Decimal Field Validation', () => {
     test('should handle decimal precision correctly for account virtual balance', async () => {
-      const userGroup = await testPrisma.userGroup.create({
-        data: { title: 'Test Group' }
-      })
-
-      const user = await testPrisma.user.create({
-        data: {
-          email: 'decimal@example.com',
-          password: 'password',
-          userGroupId: userGroup.id
-        }
-      })
-
-      const accountType = await testPrisma.accountType.create({
-        data: { type: 'asset', name: 'Test Account Type' }
-      })
-
-      const currency = await testPrisma.currency.create({
-        data: { code: 'USD', name: 'US Dollar', symbol: '$' }
-      })
+      const userGroup = await factory.createUserGroup('Decimal Test Group')
+      const user = await factory.createUser('decimal@example.com', userGroup.id)
+      const accountType = await factory.createAccountType('asset', 'Test Account Type')
+      const currency = await factory.createCurrency('USD', 'US Dollar', '$')
 
       const account = await testPrisma.account.create({
         data: {
@@ -46,25 +33,10 @@ describe('Database Constraints and Data Types', () => {
     })
 
     test('should handle decimal precision for transaction amounts', async () => {
-      const userGroup = await testPrisma.userGroup.create({
-        data: { title: 'Test Group' }
-      })
-
-      const user = await testPrisma.user.create({
-        data: {
-          email: 'amount@example.com',
-          password: 'password',
-          userGroupId: userGroup.id
-        }
-      })
-
-      const accountType = await testPrisma.accountType.create({
-        data: { type: 'asset', name: 'Test Account Type' }
-      })
-
-      const currency = await testPrisma.currency.create({
-        data: { code: 'USD', name: 'US Dollar', symbol: '$' }
-      })
+      const userGroup = await factory.createUserGroup('Amount Test Group')
+      const user = await factory.createUser('amount@example.com', userGroup.id)
+      const accountType = await factory.createAccountType('asset', 'Amount Test Account Type')
+      const currency = await factory.createCurrency('USD2', 'US Dollar 2', '$')
 
       const account = await testPrisma.account.create({
         data: {

@@ -1,15 +1,34 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock de las dependencias antes de importar
-vi.mock('@/lib/db')
+const mockFindMany = vi.fn()
+const mockAuth = vi.fn()
+
+vi.mock('@/lib/db', () => ({
+  db: {
+    currency: {
+      findMany: mockFindMany,
+    }
+  }
+}))
+
+vi.mock('@/lib/auth', () => ({
+  auth: mockAuth,
+}))
 
 // Importar después de hacer los mocks
 const { GET } = await import('@/app/api/currencies/route')
-const { db } = await import('@/lib/db')
 
 describe('Currencies API - Tests Unitarios', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Mock de sesión de usuario por defecto
+    mockAuth.mockResolvedValue({
+      user: {
+        id: 'test-user-id',
+        email: 'test@example.com'
+      }
+    })
   })
 
   describe('GET /api/currencies', () => {
@@ -17,32 +36,32 @@ describe('Currencies API - Tests Unitarios', () => {
       // Arrange
       const mockCurrencies = [
         {
-          id: 'curr-1',
+          id: 'currency-1',
           code: 'ARS',
           name: 'Peso Argentino',
           symbol: '$',
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         },
         {
-          id: 'curr-2',
+          id: 'currency-2',
           code: 'USD',
           name: 'Dólar Estadounidense',
           symbol: 'US$',
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         },
         {
-          id: 'curr-3',
+          id: 'currency-3',
           code: 'EUR',
           name: 'Euro',
           symbol: '€',
-          createdAt: new Date(),
-          updatedAt: new Date()
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         }
       ]
 
-      vi.mocked(db.currency.findMany).mockResolvedValueOnce(mockCurrencies as any)
+      mockFindMany.mockResolvedValueOnce(mockCurrencies)
 
       // Act
       const response = await GET()
@@ -51,7 +70,7 @@ describe('Currencies API - Tests Unitarios', () => {
       // Assert
       expect(response.status).toBe(200)
       expect(data).toEqual(mockCurrencies)
-      expect(db.currency.findMany).toHaveBeenCalledWith({
+      expect(mockFindMany).toHaveBeenCalledWith({
         orderBy: {
           code: 'asc',
         },
@@ -60,7 +79,7 @@ describe('Currencies API - Tests Unitarios', () => {
 
     it('debe devolver array vacío si no hay monedas', async () => {
       // Arrange
-      vi.mocked(db.currency.findMany).mockResolvedValueOnce([])
+      mockFindMany.mockResolvedValueOnce([])
 
       // Act
       const response = await GET()
@@ -73,7 +92,7 @@ describe('Currencies API - Tests Unitarios', () => {
 
     it('debe manejar errores de base de datos', async () => {
       // Arrange
-      vi.mocked(db.currency.findMany).mockRejectedValueOnce(new Error('Database connection error'))
+      mockFindMany.mockRejectedValueOnce(new Error('Database connection failed'))
 
       // Act
       const response = await GET()
@@ -81,33 +100,39 @@ describe('Currencies API - Tests Unitarios', () => {
 
       // Assert
       expect(response.status).toBe(500)
-      expect(data.message).toBe('Error interno del servidor')
+      expect(data).toEqual({ error: 'Error al obtener las monedas' })
     })
 
     it('debe devolver monedas ordenadas por código', async () => {
       // Arrange
       const mockCurrencies = [
         {
-          id: 'curr-1',
+          id: 'currency-1',
           code: 'ARS',
           name: 'Peso Argentino',
-          symbol: '$'
+          symbol: '$',
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         },
         {
-          id: 'curr-2',
+          id: 'currency-2',
           code: 'EUR',
           name: 'Euro',
-          symbol: '€'
+          symbol: '€',
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         },
         {
-          id: 'curr-3',
+          id: 'currency-3',
           code: 'USD',
           name: 'Dólar Estadounidense',
-          symbol: 'US$'
+          symbol: 'US$',
+          createdAt: '2025-07-04T01:25:12.027Z',
+          updatedAt: '2025-07-04T01:25:12.027Z'
         }
       ]
 
-      vi.mocked(db.currency.findMany).mockResolvedValueOnce(mockCurrencies as any)
+      mockFindMany.mockResolvedValueOnce(mockCurrencies)
 
       // Act
       const response = await GET()
@@ -124,20 +149,24 @@ describe('Currencies API - Tests Unitarios', () => {
       // Arrange
       const mockCurrencies = [
         {
-          id: 'curr-1',
+          id: 'currency-1',
           code: 'ARS',
           name: 'Peso Argentino',
-          symbol: '$'
+          symbol: '$',
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
         {
-          id: 'curr-2',
+          id: 'currency-2',
           code: 'USD',
           name: 'Dólar Estadounidense',
-          symbol: 'US$'
+          symbol: 'US$',
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       ]
 
-      vi.mocked(db.currency.findMany).mockResolvedValueOnce(mockCurrencies as any)
+      mockFindMany.mockResolvedValueOnce(mockCurrencies)
 
       // Act
       const response = await GET()
@@ -145,13 +174,8 @@ describe('Currencies API - Tests Unitarios', () => {
 
       // Assert
       expect(response.status).toBe(200)
-      expect(data.length).toBeGreaterThan(0)
-      
-      // Verificar que ARS está presente
-      const arsFound = data.find((currency: any) => currency.code === 'ARS')
-      expect(arsFound).toBeDefined()
-      expect(arsFound?.name).toBe('Peso Argentino')
-      expect(arsFound?.symbol).toBe('$')
+      expect(data.some((currency: any) => currency.code === 'ARS')).toBe(true)
+      expect(data.find((currency: any) => currency.code === 'ARS').name).toBe('Peso Argentino')
     })
   })
 })

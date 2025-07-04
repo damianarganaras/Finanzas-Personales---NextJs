@@ -23,7 +23,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error al obtener monedas:', error);
     return NextResponse.json(
-      { message: 'Error interno del servidor' },
+      { error: 'Error al obtener las monedas' },
       { status: 500 }
     );
   }

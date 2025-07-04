@@ -1,12 +1,14 @@
 import { describe, test, expect, beforeEach } from 'vitest'
-import { prisma } from '../test/setup'
-import { TestDataFactory } from '../test/test-data-factory'
+import { testPrisma, setupDatabaseTests } from './integration-setup'
+import { TestDataFactory } from './test-data-factory'
 
 describe('Database Integration Tests with Factory', () => {
+  setupDatabaseTests()
+  
   let factory: TestDataFactory
 
   beforeEach(() => {
-    factory = new TestDataFactory(prisma)
+    factory = new TestDataFactory(testPrisma)
   })
 
   test('should create complete financial setup using factory', async () => {
@@ -46,7 +48,7 @@ describe('Database Integration Tests with Factory', () => {
     )
 
     // Link transaction to category
-    const transactionCategory = await prisma.transactionCategory.create({
+    const transactionCategory = await testPrisma.transactionCategory.create({
       data: {
         transactionId: expenseTransaction.id,
         categoryId: setup.category.id
@@ -54,7 +56,7 @@ describe('Database Integration Tests with Factory', () => {
     })
 
     // Link transaction to tag
-    const transactionTag = await prisma.transactionTag.create({
+    const transactionTag = await testPrisma.transactionTag.create({
       data: {
         transactionId: expenseTransaction.id,
         tagId: setup.tag.id
@@ -62,7 +64,7 @@ describe('Database Integration Tests with Factory', () => {
     })
 
     // Verify the complete transaction with relationships
-    const completeTransaction = await prisma.transaction.findUnique({
+    const completeTransaction = await testPrisma.transaction.findUnique({
       where: { id: expenseTransaction.id },
       include: {
         account: true,
@@ -111,14 +113,14 @@ describe('Database Integration Tests with Factory', () => {
     )
 
     // Link budget to categories
-    await prisma.budgetCategory.create({
+    await testPrisma.budgetCategory.create({
       data: {
         budgetId: budget.id,
         categoryId: entertainmentCategory.id
       }
     })
 
-    await prisma.budgetCategory.create({
+    await testPrisma.budgetCategory.create({
       data: {
         budgetId: budget.id,
         categoryId: transportCategory.id
@@ -126,7 +128,7 @@ describe('Database Integration Tests with Factory', () => {
     })
 
     // Verify budget with all relationships
-    const completeBudget = await prisma.budget.findUnique({
+    const completeBudget = await testPrisma.budget.findUnique({
       where: { id: budget.id },
       include: {
         limits: true,
@@ -204,7 +206,7 @@ describe('Database Integration Tests with Factory', () => {
     await factory.createTransaction(setup.assetAccount.id, journal3.id, 2000.00, 'Monthly salary')
 
     // Query all transactions for the account
-    const accountTransactions = await prisma.transaction.findMany({
+    const accountTransactions = await testPrisma.transaction.findMany({
       where: { accountId: setup.assetAccount.id },
       include: { transactionJournal: true }
     })
@@ -241,16 +243,16 @@ describe('Database Integration Tests with Factory', () => {
     )
 
     // Link to category and tag
-    await prisma.transactionCategory.create({
+    await testPrisma.transactionCategory.create({
       data: { transactionId: transaction.id, categoryId: foodCategory.id }
     })
 
-    await prisma.transactionTag.create({
+    await testPrisma.transactionTag.create({
       data: { transactionId: transaction.id, tagId: urgentTag.id }
     })
 
     // Complex query: Find all transactions for a user that are tagged as urgent and in food category
-    const urgentFoodTransactions = await prisma.transaction.findMany({
+    const urgentFoodTransactions = await testPrisma.transaction.findMany({
       where: {
         account: { userId: setup.user.id },
         tags: {

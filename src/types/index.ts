@@ -2,6 +2,7 @@ export * from './auth';
 export * from './account';
 export * from './transaction';
 export * from './credit-card';
+export * from './budget';
 
 // Tipos para monedas
 export interface Currency {
