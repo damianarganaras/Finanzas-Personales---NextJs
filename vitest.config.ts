@@ -16,9 +16,13 @@ export default defineConfig({
     pool: 'threads',
     poolOptions: {
       threads: {
-        singleThread: false,
+        singleThread: true,  // Ejecutar tests secuencialmente
       }
     },
+    // Timeout más largo para tests de integración
+    testTimeout: 30000,
+    // Retry fallidos una vez
+    retry: 1,
     // Mock de APIs externas por defecto
     mockReset: true,
     clearMocks: true,

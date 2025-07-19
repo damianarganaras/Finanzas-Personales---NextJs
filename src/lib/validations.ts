@@ -62,9 +62,21 @@ export const budgetSchema = z.object({
   categoryIds: z.array(z.string()).default([]),
 });
 
+export const billSchema = z.object({
+  name: z.string().min(1, 'El nombre es requerido'),
+  description: z.string().optional(),
+  amount: z.string().min(1, 'El monto es requerido').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Debe ser un número positivo'),
+  categoryId: z.string().min(1, 'La categoría es requerida'),
+  nextDueDate: z.string().min(1, 'La fecha de vencimiento es requerida'),
+  frequency: z.enum(['weekly', 'monthly', 'quarterly', 'annually']).default('monthly'),
+  active: z.boolean().default(true),
+  autoPayEnabled: z.boolean().default(false),
+});
+
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type AccountFormData = z.infer<typeof accountSchema>;
 export type TransactionFormData = z.infer<typeof transactionSchema>;
 export type CategoryFormData = z.infer<typeof categorySchema>;
 export type BudgetFormData = z.infer<typeof budgetSchema>;
+export type BillFormData = z.infer<typeof billSchema>;

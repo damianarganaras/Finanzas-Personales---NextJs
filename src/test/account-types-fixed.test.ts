@@ -1,11 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { db } from '@/lib/db'
 
-// Mock de las dependencias antes de importar
-vi.mock('@/lib/db')
+// Mock completo de Prisma antes de importar
+vi.mock('@/lib/db', () => ({
+  db: {
+    accountType: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    }
+  }
+}))
 
 // Importar después de hacer los mocks
 const { GET } = await import('@/app/api/account-types/route')
+const { db } = await import('@/lib/db')
 
 describe('Account Types API - Tests Unitarios', () => {
   beforeEach(() => {

@@ -3,6 +3,29 @@ import { PrismaClient } from '@prisma/client'
 export class TestDataFactory {
   constructor(private prisma: PrismaClient) {}
 
+  // Helper method to ensure prerequisites exist
+  async ensurePrerequisites() {
+    // Check if basic data exists, if not create it
+    const userGroupCount = await this.prisma.userGroup.count()
+    const accountTypeCount = await this.prisma.accountType.count()
+    const currencyCount = await this.prisma.currency.count()
+
+    if (userGroupCount === 0) {
+      await this.createUserGroup('Default User Group')
+    }
+
+    if (accountTypeCount === 0) {
+      await this.createAccountType('asset', 'Asset Account')
+      await this.createAccountType('expense', 'Expense Account')
+      await this.createAccountType('revenue', 'Revenue Account')
+      await this.createAccountType('liability', 'Liability Account')
+    }
+
+    if (currencyCount === 0) {
+      await this.createCurrency('USD', 'US Dollar', '$')
+    }
+  }
+
   async createUserGroup(title = 'Test User Group') {
     return this.prisma.userGroup.create({
       data: { title }
@@ -29,6 +52,21 @@ export class TestDataFactory {
     })
   }
 
+  // Simplified method for creating user with defaults
+  async createUserWithDefaults(
+    email: string,
+    options: {
+      name?: string
+      password?: string
+      verified?: boolean
+    } = {}
+  ) {
+    await this.ensurePrerequisites()
+    const userGroup = await this.getDefaultUserGroup()
+    
+    return this.createUser(email, userGroup.id, options)
+  }
+
   async createAccountType(type: string, name?: string) {
     return this.prisma.accountType.create({
       data: {
@@ -46,6 +84,33 @@ export class TestDataFactory {
         symbol: symbol || code
       }
     })
+  }
+
+  // Helper methods to get existing data
+  async getDefaultUserGroup() {
+    let userGroup = await this.prisma.userGroup.findFirst()
+    if (!userGroup) {
+      userGroup = await this.createUserGroup('Default User Group')
+    }
+    return userGroup
+  }
+
+  async getDefaultAccountType(type: string) {
+    let accountType = await this.prisma.accountType.findFirst({
+      where: { type }
+    })
+    if (!accountType) {
+      accountType = await this.createAccountType(type, `${type.charAt(0).toUpperCase() + type.slice(1)} Account`)
+    }
+    return accountType
+  }
+
+  async getDefaultCurrency() {
+    let currency = await this.prisma.currency.findFirst()
+    if (!currency) {
+      currency = await this.createCurrency('USD', 'US Dollar', '$')
+    }
+    return currency
   }
 
   async createAccount(
@@ -72,6 +137,37 @@ export class TestDataFactory {
         active: options.active !== undefined ? options.active : true
       }
     })
+  }
+
+  // Simplified method for creating account with defaults
+  async createAccountWithDefaults(
+    name: string,
+    userId?: string,
+    accountType: string = 'asset',
+    options: {
+      virtualBalance?: number
+      iban?: string
+      active?: boolean
+    } = {}
+  ) {
+    await this.ensurePrerequisites()
+    
+    const userGroup = await this.getDefaultUserGroup()
+    const user = userId ? await this.prisma.user.findUnique({ where: { id: userId } }) : 
+                         await this.prisma.user.findFirst() || 
+                         await this.createUser('test@example.com', userGroup.id)
+    
+    const accountTypeRecord = await this.getDefaultAccountType(accountType)
+    const currency = await this.getDefaultCurrency()
+
+    return this.createAccount(
+      name,
+      user!.id,
+      userGroup.id,
+      accountTypeRecord.id,
+      currency.id,
+      options
+    )
   }
 
   async createTransactionJournal(
