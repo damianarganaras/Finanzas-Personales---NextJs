@@ -77,7 +77,7 @@ export default function TransactionDetailPage() {
     );
   }
 
-  const getTypeLabel = (type: string) => {
+  const getTypeLabel = (type?: string) => {
     switch (type) {
       case 'withdrawal':
         return 'Gasto';
@@ -85,12 +85,12 @@ export default function TransactionDetailPage() {
         return 'Ingreso';
       case 'transfer':
         return 'Transferencia';
-      default:
-        return type;
+  default:
+    return type ?? 'unknown';
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = (type?: string) => {
     switch (type) {
       case 'withdrawal':
         return 'bg-red-100 text-red-800';
@@ -162,7 +162,7 @@ export default function TransactionDetailPage() {
                 <span>Fecha</span>
               </div>
               <p className="font-medium">
-                {format(new Date(transaction.date), 'PPP', { locale: es })}
+                {format(new Date(transaction.date ?? new Date()), 'PPP', { locale: es })}
               </p>
             </div>
             

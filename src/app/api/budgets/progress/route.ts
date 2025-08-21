@@ -47,8 +47,7 @@ export async function GET(request: NextRequest) {
             category: {
               select: {
                 id: true,
-                name: true,
-                type: true
+                name: true
               }
             }
           }
@@ -81,26 +80,31 @@ export async function GET(request: NextRequest) {
         // Calcular gastos en el período
         const transactions = await db.transaction.findMany({
           where: {
-            userId: session.user.id,
-            date: {
-              gte: currentLimit.startDate,
-              lte: currentLimit.endDate,
-            },
-            categoryId: {
-              in: categoryIds
+            transactionJournal: {
+              // session.user is guaranteed by early return above
+              userId: session.user!.id,
+              date: {
+                gte: currentLimit.startDate,
+                lte: currentLimit.endDate,
+              },
             },
             amount: {
-              lt: 0 // Solo gastos (amounts negativos)
-            }
+              lt: 0, // Solo gastos (amounts negativos)
+            },
+            categories: {
+              some: {
+                categoryId: { in: categoryIds },
+              },
+            },
           },
           include: {
-            category: {
+            categories: {
               select: {
-                id: true,
-                name: true
-              }
-            }
-          }
+                categoryId: true,
+                category: { select: { id: true, name: true } },
+              },
+            },
+          },
         })
 
         // Calcular total gastado
@@ -125,8 +129,10 @@ export async function GET(request: NextRequest) {
         }
 
         // Calcular breakdown por categoría
-        const categoryBreakdown = budget.categories.map(bc => {
-          const categoryTransactions = transactions.filter(t => t.categoryId === bc.categoryId)
+        const categoryBreakdown = budget.categories.map((bc) => {
+          const categoryTransactions = transactions.filter((t) =>
+            t.categories.some((tc) => tc.categoryId === bc.categoryId)
+          )
           const categorySpent = Math.abs(
             categoryTransactions.reduce((sum, t) => sum + Number(t.amount), 0)
           )
@@ -137,7 +143,7 @@ export async function GET(request: NextRequest) {
             categoryName: bc.category.name,
             budgeted: budgeted * (categoryPercentage / 100), // Proporción estimada
             spent: categorySpent,
-            percentage: categoryPercentage
+            percentage: categoryPercentage,
           }
         })
 

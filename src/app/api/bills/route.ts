@@ -17,6 +17,11 @@ export async function GET() {
       },
       orderBy: {
         nextDueDate: 'asc'
+      },
+      include: {
+        category: {
+          select: { id: true, name: true }
+        }
       }
     });
 
@@ -42,17 +47,23 @@ export async function POST(request: NextRequest) {
     
     const validatedData = billSchema.parse({
       ...body,
-      userId: session.user.id
+      userId: session.user.id,
     });
 
     const bill = await db.bill.create({
       data: {
         name: validatedData.name,
-        amount: validatedData.amount,
-        frequency: validatedData.frequency || 'monthly',
-        nextDueDate: validatedData.nextDueDate || new Date(),
-        active: validatedData.active !== undefined ? validatedData.active : true,
-        userId: session.user.id
+  description: validatedData.description ?? null,
+  amount: validatedData.amount,
+        categoryId: validatedData.categoryId,
+  frequency: validatedData.frequency || 'monthly',
+  nextDueDate: validatedData.nextDueDate,
+  active: validatedData.active !== undefined ? validatedData.active : true,
+        autoPayEnabled: validatedData.autoPayEnabled ?? false,
+        userId: session.user.id,
+      },
+      include: {
+        category: { select: { id: true, name: true } }
       }
     });
 

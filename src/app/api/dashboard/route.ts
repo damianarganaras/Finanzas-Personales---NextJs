@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import type { CreditCard, PiggyBank, Bill } from '@prisma/client';
 
 export async function GET() {
   try {
@@ -16,15 +17,12 @@ export async function GET() {
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    // Obtener datos en paralelo para mejor performance
+    // Obtener datos principales en paralelo (tablas base que deben existir)
     const [
       accounts,
       currentMonthTransactions,
       lastMonthTransactions,
-      budgets,
-      creditCards,
-      piggyBanks,
-      bills
+      budgets
     ] = await Promise.all([
       // Cuentas con saldos
       db.account.findMany({
@@ -68,30 +66,47 @@ export async function GET() {
       db.budget.findMany({
         where: { userId, active: true },
         include: {
-          budgetLimits: {
+          limits: {
             where: {
               startDate: { lte: now },
               endDate: { gte: now }
             }
           }
         }
-      }),
-      
-      // Tarjetas de crédito
-      db.creditCard.findMany({
-        where: { userId, active: true }
-      }),
-      
-      // Metas de ahorro
-      db.piggyBank.findMany({
-        where: { userId }
-      }),
-      
-      // Facturas próximas
-      db.bill.findMany({
-        where: { userId, active: true }
       })
     ]);
+
+    // Consultas opcionales que podrían no existir si faltan migraciones en el entorno
+  let creditCards: CreditCard[];
+  let piggyBanks: PiggyBank[];
+  let bills: Bill[];
+
+    try {
+      creditCards = await db.creditCard.findMany({
+        where: { userId, active: true }
+      });
+    } catch {
+      console.warn('[dashboard] creditCards query failed, defaulting to empty array');
+      creditCards = [];
+    }
+
+    try {
+      piggyBanks = await db.piggyBank.findMany({
+        where: { userId }
+      });
+    } catch {
+      console.warn('[dashboard] piggyBanks query failed, defaulting to empty array');
+      piggyBanks = [];
+    }
+
+    try {
+      bills = await db.bill.findMany({
+        where: { userId, active: true }
+      });
+    } catch {
+      console.warn('[dashboard] bills query failed, defaulting to empty array');
+      bills = [];
+    }
 
     // Calcular métricas del balance
     const assetAccounts = accounts.filter(acc => acc.accountType.type === 'asset');
@@ -125,44 +140,51 @@ export async function GET() {
 
     // Calcular progreso de presupuestos
     const budgetProgress = budgets.map(budget => {
-      const currentLimit = budget.budgetLimits[0];
+      const currentLimit = budget.limits[0];
       if (!currentLimit) return null;
       
       const spent = currentMonthTransactions
         .filter(t => t.account.accountType.type === 'expense')
         .reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
-      
-      const percentage = (spent / Number(currentLimit.amount)) * 100;
+      const limitAmount = Number(currentLimit.amount) || 0;
+      const rawPercentage = limitAmount > 0 ? (spent / limitAmount) * 100 : 0;
+      const percentage = Math.max(0, Math.min(rawPercentage, 100));
       
       return {
         id: budget.id,
         name: budget.name,
-        limit: Number(currentLimit.amount),
+        limit: limitAmount,
         spent,
-        percentage: Math.min(percentage, 100),
-        remaining: Math.max(Number(currentLimit.amount) - spent, 0)
+        percentage,
+        remaining: Math.max(limitAmount - spent, 0)
       };
     }).filter(Boolean);
 
     // Calcular progreso de metas de ahorro
-    const savingsProgress = piggyBanks.map(piggy => ({
-      id: piggy.id,
-      name: piggy.name,
-      target: Number(piggy.targetAmount),
-      current: Number(piggy.currentAmount),
-      percentage: (Number(piggy.currentAmount) / Number(piggy.targetAmount)) * 100,
-      remaining: Number(piggy.targetAmount) - Number(piggy.currentAmount)
-    }));
+    const savingsProgress = piggyBanks.map(piggy => {
+      const target = Number(piggy.targetAmount) || 0;
+      const current = Number(piggy.currentAmount) || 0;
+      const raw = target > 0 ? (current / target) * 100 : 0;
+      const percentage = Math.max(0, Math.min(raw, 100));
+      return {
+        id: piggy.id,
+        name: piggy.name,
+        target,
+        current,
+        percentage,
+        remaining: Math.max(target - current, 0)
+      };
+    });
 
     // Calcular próximas facturas
-    const upcomingBills = bills.map(bill => {
+  const upcomingBills = (bills || []).map(bill => {
       const nextDue = new Date(bill.nextDueDate);
       const daysUntilDue = Math.ceil((nextDue.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       
       return {
         id: bill.id,
         name: bill.name,
-        amount: Number(bill.amount),
+    amount: Number(bill.amount),
         dueDate: bill.nextDueDate,
         daysUntilDue,
         frequency: bill.frequency

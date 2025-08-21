@@ -21,7 +21,7 @@ export const accountSchema = z.object({
   virtualBalance: z.number().optional(),
   iban: z.string().optional(),
   active: z.boolean(),
-  currencyId: z.string().min(1, 'La moneda es requerida').optional(),
+  currencyId: z.string().min(1, 'La moneda es requerida'),
 });
 
 export const transactionSchema = z.object({
@@ -31,8 +31,8 @@ export const transactionSchema = z.object({
   date: z.date(),
   sourceAccountId: z.string().optional(),
   destinationAccountId: z.string().optional(),
-  categoryIds: z.array(z.string()).optional().default([]),
-  tagIds: z.array(z.string()).optional().default([]),
+  categoryIds: z.array(z.string()),
+  tagIds: z.array(z.string()),
   notes: z.string().optional(),
 }).refine((data) => {
   if (data.type === 'withdrawal' && !data.sourceAccountId) {
@@ -65,9 +65,11 @@ export const budgetSchema = z.object({
 export const billSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido'),
   description: z.string().optional(),
-  amount: z.string().min(1, 'El monto es requerido').refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 'Debe ser un número positivo'),
+  // Acepta números o strings y los convierte a number positivo
+  amount: z.coerce.number().positive('Debe ser un número positivo'),
   categoryId: z.string().min(1, 'La categoría es requerida'),
-  nextDueDate: z.string().min(1, 'La fecha de vencimiento es requerida'),
+  // Acepta string o Date y los convierte a Date
+  nextDueDate: z.coerce.date(),
   frequency: z.enum(['weekly', 'monthly', 'quarterly', 'annually']).default('monthly'),
   active: z.boolean().default(true),
   autoPayEnabled: z.boolean().default(false),

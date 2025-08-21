@@ -108,7 +108,7 @@ export default function EditTransactionPage() {
         type: transaction.type as 'withdrawal' | 'deposit' | 'transfer',
         description: transaction.description,
         amount: Math.abs(Number(transaction.amount)), // Siempre positivo en el formulario
-        date: new Date(transaction.date),
+  date: transaction.date ? new Date(transaction.date) : new Date(),
         sourceAccountId: transaction.sourceAccountId || '',
         destinationAccountId: transaction.destinationAccountId || '',
         categoryIds: transaction.categories?.map(c => c.id) || [],
@@ -125,10 +125,10 @@ export default function EditTransactionPage() {
     
     // Limpiar las cuentas seleccionadas al cambiar de tipo si no son compatibles
     if (newType === 'deposit') {
-      form.setValue('sourceAccountId', undefined);
+      form.setValue('sourceAccountId', '');
     }
     if (newType === 'withdrawal') {
-      form.setValue('destinationAccountId', undefined);
+      form.setValue('destinationAccountId', '');
     }
   };
 

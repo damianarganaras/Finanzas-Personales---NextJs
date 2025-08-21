@@ -30,10 +30,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { transactionSchema, type TransactionFormData } from '@/lib/validations';
+import { transactionSchema } from '@/lib/validations';
+import { z } from 'zod';
+// Use output type to match zodResolver's inferred return type
+type TransactionFormData = z.infer<typeof transactionSchema>;
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useTags, useCreateTag } from '@/hooks/use-tags';
+import type { Category, Tag } from '@/types/transaction';
 import { useCreateTransaction } from '@/hooks/use-transactions';
 
 export default function CreateTransactionPage() {
@@ -44,7 +48,7 @@ export default function CreateTransactionPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newTagName, setNewTagName] = useState('');
 
-  const { accounts, loading: accountsLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { categories, loading: categoriesLoading } = useCategories();
   const { tags, loading: tagsLoading } = useTags();
   
@@ -71,8 +75,8 @@ export default function CreateTransactionPage() {
     setTransactionType(newType);
     form.setValue('type', newType);
     // Limpiar las cuentas seleccionadas al cambiar de tipo
-    form.setValue('sourceAccountId', undefined);
-    form.setValue('destinationAccountId', undefined);
+  form.setValue('sourceAccountId', '');
+  form.setValue('destinationAccountId', '');
   };
 
   const handleCreateCategory = async () => {
@@ -105,6 +109,9 @@ export default function CreateTransactionPage() {
     try {
       await createTransactionMutation.mutateAsync({
         ...data,
+        // Ensure required arrays are always provided
+        categoryIds: data.categoryIds ?? [],
+        tagIds: data.tagIds ?? [],
         type: transactionType,
       });
       
@@ -298,9 +305,9 @@ export default function CreateTransactionPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {assetAccounts.map((account) => (
+              {assetAccounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
-                              {account.name} - ${account.virtualBalance}
+                {account.name} - ${Number(account.virtualBalance ?? 0).toFixed(2)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -329,9 +336,9 @@ export default function CreateTransactionPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {assetAccounts.map((account) => (
+              {assetAccounts.map((account) => (
                             <SelectItem key={account.id} value={account.id}>
-                              {account.name} - ${account.virtualBalance}
+                {account.name} - ${Number(account.virtualBalance ?? 0).toFixed(2)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -404,12 +411,13 @@ export default function CreateTransactionPage() {
                   render={() => (
                     <FormItem>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {categories.map((category) => (
+            {categories.map((category: Category) => (
                           <FormField
                             key={category.id}
                             control={form.control}
                             name="categoryIds"
                             render={({ field }) => {
+                const selected = field.value ?? [] as string[];
                               return (
                                 <FormItem
                                   key={category.id}
@@ -417,14 +425,12 @@ export default function CreateTransactionPage() {
                                 >
                                   <FormControl>
                                     <Checkbox
-                                      checked={field.value?.includes(category.id)}
+                    checked={selected.includes(category.id)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...field.value, category.id])
+                      ? field.onChange([...(selected), category.id])
                                           : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== category.id
-                                              )
+                        selected.filter((value) => value !== category.id)
                                             )
                                       }}
                                     />
@@ -495,12 +501,13 @@ export default function CreateTransactionPage() {
                   render={() => (
                     <FormItem>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {tags.map((tag) => (
+            {tags.map((tag: Tag) => (
                           <FormField
                             key={tag.id}
                             control={form.control}
                             name="tagIds"
                             render={({ field }) => {
+                const selected = field.value ?? [] as string[];
                               return (
                                 <FormItem
                                   key={tag.id}
@@ -508,14 +515,12 @@ export default function CreateTransactionPage() {
                                 >
                                   <FormControl>
                                     <Checkbox
-                                      checked={field.value?.includes(tag.id)}
+                    checked={selected.includes(tag.id)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...field.value, tag.id])
+                      ? field.onChange([...(selected), tag.id])
                                           : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== tag.id
-                                              )
+                        selected.filter((value) => value !== tag.id)
                                             )
                                       }}
                                     />

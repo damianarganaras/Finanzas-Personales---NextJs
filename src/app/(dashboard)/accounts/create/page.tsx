@@ -23,26 +23,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { accountSchema, type AccountFormData } from '@/lib/validations';
 import { useCurrencies } from '@/hooks/use-currencies';
 import { useAccountTypes } from '@/hooks/use-account-types';
+import { getAccountTypeName, getAccountTypeIconComponent } from '@/lib/account-types';
 
-// Funciones auxiliares para tipos de cuenta
-function getAccountTypeName(type: string): string {
-  const names: Record<string, string> = {
-    asset: 'Activos',
-    liability: 'Pasivos', 
-    expense: 'Gastos',
-    revenue: 'Ingresos'
-  };
-  return names[type] || type;
-}
-
+// Descripciones amigables para mostrar bajo el nombre
 function getAccountTypeDescription(type: string): string {
-  const descriptions: Record<string, string> = {
+  const map: Record<string, string> = {
     asset: 'Cuentas corrientes, ahorros, efectivo',
     liability: 'Tarjetas de crédito, préstamos',
     expense: 'Categorías de gastos',
-    revenue: 'Fuentes de ingresos'
+    revenue: 'Fuentes de ingresos',
   };
-  return descriptions[type] || '';
+  return map[String(type).toLowerCase()] || '';
 }
 
 export default function CreateAccountPage() {
@@ -176,18 +167,24 @@ export default function CreateAccountPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {accountTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.id}>
-                              <div>
-                                <div className="font-medium">
-                                  {type.name || getAccountTypeName(type.type)}
+                          {accountTypes.map((type) => {
+                            const LabelIcon = getAccountTypeIconComponent(type.type);
+                            return (
+                              <SelectItem key={type.id} value={type.id}>
+                                <div className="flex items-start gap-2">
+                                  <LabelIcon className="h-4 w-4 mt-1" />
+                                  <div>
+                                    <div className="font-medium">
+                                      {getAccountTypeName(type.type)}
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {getAccountTypeDescription(type.type)}
+                                    </div>
+                                  </div>
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {type.description || getAccountTypeDescription(type.type)}
-                                </div>
-                              </div>
-                            </SelectItem>
-                          ))}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                       <FormMessage />

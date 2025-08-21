@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
@@ -69,13 +68,6 @@ function AccountCard({ account }: { account: Account }) {
 export function AccountsList() {
   const { data: accounts, isLoading, error } = useAccounts();
 
-  // Debug logs
-  console.log('AccountsList Debug:', {
-    accounts,
-    accountsLength: accounts?.length,
-    isLoading,
-    error
-  });
 
   if (isLoading) {
     return (

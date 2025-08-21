@@ -8,9 +8,9 @@ export type AccountTypeKey = 'asset' | 'liability' | 'expense' | 'revenue';
 
 export const ACCOUNT_TYPE_NAMES: Record<AccountTypeKey, string> = {
   asset: 'Activo',
-  liability: 'Pasivo', 
+  liability: 'Pasivo',
   expense: 'Gasto',
-  revenue: 'Ingreso'
+  revenue: 'Ingreso',
 } as const;
 
 export const ACCOUNT_TYPE_COLORS: Record<AccountTypeKey, string> = {
@@ -28,31 +28,45 @@ export const ACCOUNT_TYPE_ICONS: Record<AccountTypeKey, LucideIcon> = {
 } as const;
 
 /**
+ * Normaliza una cadena de tipo de cuenta a la clave canónica en minúsculas
+ */
+export function normalizeAccountType(type: string | undefined | null): AccountTypeKey | null {
+  if (!type) return null;
+  const key = String(type).toLowerCase() as AccountTypeKey;
+  return (['asset', 'liability', 'expense', 'revenue'] as const).includes(key)
+    ? key
+    : null;
+}
+
+/**
  * Obtiene el nombre en español de un tipo de cuenta
  */
 export function getAccountTypeName(type: string): string {
-  return ACCOUNT_TYPE_NAMES[type as AccountTypeKey] || type;
+  const key = normalizeAccountType(type);
+  return key ? ACCOUNT_TYPE_NAMES[key] : type;
 }
 
 /**
  * Obtiene las clases CSS para el color de badge de un tipo de cuenta
  */
 export function getAccountTypeColor(type: string): string {
-  return ACCOUNT_TYPE_COLORS[type as AccountTypeKey] || 'bg-gray-100 text-gray-800';
+  const key = normalizeAccountType(type);
+  return key ? ACCOUNT_TYPE_COLORS[key] : 'bg-gray-100 text-gray-800';
 }
 
 /**
  * Obtiene el componente de icono para un tipo de cuenta
  */
 export function getAccountTypeIconComponent(type: string): LucideIcon {
-  return ACCOUNT_TYPE_ICONS[type as AccountTypeKey] || Wallet;
+  const key = normalizeAccountType(type);
+  return key ? ACCOUNT_TYPE_ICONS[key] : Wallet;
 }
 
 /**
  * Verifica si un tipo de cuenta es válido
  */
 export function isValidAccountType(type: string): type is AccountTypeKey {
-  return type in ACCOUNT_TYPE_NAMES;
+  return normalizeAccountType(type) !== null;
 }
 
 /**
@@ -62,7 +76,8 @@ export function filterAccountsByType<T extends { accountType: { type: string } }
   accounts: T[], 
   type: AccountTypeKey
 ): T[] {
-  return accounts.filter(account => account.accountType.type === type);
+  const target = normalizeAccountType(type) as AccountTypeKey;
+  return accounts.filter((account) => normalizeAccountType(account.accountType.type) === target);
 }
 
 /**

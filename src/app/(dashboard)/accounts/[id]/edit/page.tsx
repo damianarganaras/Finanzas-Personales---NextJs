@@ -25,17 +25,7 @@ import { accountSchema, type AccountFormData } from '@/lib/validations';
 import { useCurrencies } from '@/hooks/use-currencies';
 import { useAccountTypes } from '@/hooks/use-account-types';
 import { useUpdateAccount, useAccountById } from '@/hooks/use-accounts';
-
-// Funciones auxiliares para tipos de cuenta
-function getAccountTypeName(type: string): string {
-  const names: Record<string, string> = {
-    asset: 'Activos',
-    liability: 'Pasivos', 
-    expense: 'Gastos',
-    revenue: 'Ingresos'
-  };
-  return names[type] || type;
-}
+import { getAccountTypeName } from '@/lib/account-types';
 
 function getAccountTypeDescription(type: string): string {
   const descriptions: Record<string, string> = {
@@ -96,12 +86,18 @@ export default function EditAccountPage({ params }: EditAccountPageProps) {
     setIsLoading(true);
 
     try {
-      await updateAccountMutation.mutateAsync({
+      // Ensure payload matches `{ id } & AccountFormData` exactly and required strings present
+  const payload: { id: string } & AccountFormData = {
         id: account.id,
-        ...data
-      });
-      
-      toast.success(`Cuenta "${data.name}" actualizada correctamente`);
+        name: data.name,
+        accountTypeId: data.accountTypeId,
+        active: data.active,
+        virtualBalance: data.virtualBalance,
+        iban: data.iban,
+        currencyId: data.currencyId || '',
+      };
+  await updateAccountMutation.mutateAsync(payload);
+  toast.success(`Cuenta "${data.name}" actualizada correctamente`);
       router.push(`/accounts/${account.id}`);
       router.refresh();
     } catch (error) {
@@ -192,9 +188,7 @@ export default function EditAccountPage({ params }: EditAccountPageProps) {
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Editar Cuenta</h1>
-          <p className="text-muted-foreground">
-            Modifica los datos de "{account.name}"
-          </p>
+          <p className="text-muted-foreground">Modifica los datos de "{account.name}"</p>
         </div>
       </div>
 
@@ -256,10 +250,10 @@ export default function EditAccountPage({ params }: EditAccountPageProps) {
                             <SelectItem key={type.id} value={type.id}>
                               <div>
                                 <div className="font-medium">
-                                  {type.name || getAccountTypeName(type.type)}
+                                  {getAccountTypeName(type.type)}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {type.description || getAccountTypeDescription(type.type)}
+                                  {getAccountTypeDescription(type.type)}
                                 </div>
                               </div>
                             </SelectItem>

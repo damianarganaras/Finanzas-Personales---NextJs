@@ -3,13 +3,11 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { billSchema } from '@/lib/validations';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
+interface RouteParamsPromise {
+  params: Promise<{ id: string }>
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParamsPromise) {
   try {
     const session = await auth();
     
@@ -17,10 +15,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+  const { id } = await params;
     const bill = await db.bill.findFirst({
       where: {
-        id: params.id,
+    id,
         userId: session.user.id
+      },
+      include: {
+        category: { select: { id: true, name: true } }
       }
     });
 
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, { params }: RouteParamsPromise) {
   try {
     const session = await auth();
     
@@ -47,15 +49,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
+  const { id } = await params;
     
-    const validatedData = billSchema.parse({
+  const validatedData = billSchema.parse({
       ...body,
       userId: session.user.id
     });
 
     const existingBill = await db.bill.findFirst({
       where: {
-        id: params.id,
+    id,
         userId: session.user.id
       }
     });
@@ -64,16 +67,22 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 });
     }
 
-    const bill = await db.bill.update({
+  const bill = await db.bill.update({
       where: {
-        id: params.id
+  id
       },
       data: {
         name: validatedData.name,
-        amount: validatedData.amount,
-        frequency: validatedData.frequency || 'monthly',
-        nextDueDate: validatedData.nextDueDate,
-        active: validatedData.active !== undefined ? validatedData.active : true
+    description: validatedData.description ?? null,
+    amount: validatedData.amount,
+    frequency: validatedData.frequency || 'monthly',
+    nextDueDate: validatedData.nextDueDate,
+    active: validatedData.active !== undefined ? validatedData.active : true,
+        autoPayEnabled: validatedData.autoPayEnabled ?? false,
+        categoryId: validatedData.categoryId
+      },
+      include: {
+        category: { select: { id: true, name: true } }
       }
     });
 
@@ -95,7 +104,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParamsPromise) {
   try {
     const session = await auth();
     
@@ -103,9 +112,10 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+  const { id } = await params;
     const existingBill = await db.bill.findFirst({
       where: {
-        id: params.id,
+    id,
         userId: session.user.id
       }
     });
@@ -116,7 +126,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     await db.bill.delete({
       where: {
-        id: params.id
+  id
       }
     });
 

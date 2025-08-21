@@ -30,12 +30,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { transactionSchema, type TransactionFormData } from '@/lib/validations';
+import { z } from 'zod';
+import { transactionSchema } from '@/lib/validations';
 import { useAccounts } from '@/hooks/use-accounts';
 import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { useTags, useCreateTag } from '@/hooks/use-tags';
 import { useCreateTransaction } from '@/hooks/use-transactions';
 import type { Category, Tag } from '@/types';
+
+type FormData = z.input<typeof transactionSchema>;
 
 export default function CreateTransactionPage() {
   const router = useRouter();
@@ -45,7 +48,7 @@ export default function CreateTransactionPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newTagName, setNewTagName] = useState('');
 
-  const { accounts, loading: accountsLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { categories, loading: categoriesLoading } = useCategories();
   const { tags, loading: tagsLoading } = useTags();
   
@@ -53,7 +56,7 @@ export default function CreateTransactionPage() {
   const createCategoryMutation = useCreateCategory();
   const createTagMutation = useCreateTag();
 
-  const form = useForm<TransactionFormData>({
+  const form = useForm<FormData>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: transactionType,
@@ -72,8 +75,8 @@ export default function CreateTransactionPage() {
     setTransactionType(newType);
     form.setValue('type', newType);
     // Limpiar las cuentas seleccionadas al cambiar de tipo
-    form.setValue('sourceAccountId', undefined);
-    form.setValue('destinationAccountId', undefined);
+  form.setValue('sourceAccountId', '');
+  form.setValue('destinationAccountId', '');
   };
 
   const handleCreateCategory = async () => {
@@ -102,11 +105,13 @@ export default function CreateTransactionPage() {
     }
   };
 
-  const onSubmit = async (data: TransactionFormData) => {
+  const onSubmit = async (data: FormData) => {
     try {
       await createTransactionMutation.mutateAsync({
         ...data,
         type: transactionType,
+        categoryIds: data.categoryIds ?? [],
+        tagIds: data.tagIds ?? [],
       });
       
       toast.success('Transacción creada correctamente');
@@ -405,7 +410,7 @@ export default function CreateTransactionPage() {
                   render={() => (
                     <FormItem>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {categories.map((category) => (
+                          {categories.map((category: Category) => (
                           <FormField
                             key={category.id}
                             control={form.control}
@@ -420,13 +425,14 @@ export default function CreateTransactionPage() {
                                     <Checkbox
                                       checked={field.value?.includes(category.id)}
                                       onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, category.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== category.id
-                                              )
-                                            )
+                                        const current = field.value ?? [];
+                                        if (checked) {
+                                          if (!current.includes(category.id)) {
+                                            field.onChange([...current, category.id]);
+                                          }
+                                        } else {
+                                          field.onChange(current.filter((id: string) => id !== category.id));
+                                        }
                                       }}
                                     />
                                   </FormControl>
@@ -496,7 +502,7 @@ export default function CreateTransactionPage() {
                   render={() => (
                     <FormItem>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                        {tags.map((tag) => (
+                        {tags.map((tag: Tag) => (
                           <FormField
                             key={tag.id}
                             control={form.control}
@@ -511,13 +517,14 @@ export default function CreateTransactionPage() {
                                     <Checkbox
                                       checked={field.value?.includes(tag.id)}
                                       onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, tag.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== tag.id
-                                              )
-                                            )
+                                        const current = field.value ?? [];
+                                        if (checked) {
+                                          if (!current.includes(tag.id)) {
+                                            field.onChange([...current, tag.id]);
+                                          }
+                                        } else {
+                                          field.onChange(current.filter((value: string) => value !== tag.id));
+                                        }
                                       }}
                                     />
                                   </FormControl>

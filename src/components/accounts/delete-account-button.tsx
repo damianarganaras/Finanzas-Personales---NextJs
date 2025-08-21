@@ -18,10 +18,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useDeleteAccount } from '@/hooks/use-accounts';
-import type { Account } from '@/types';
+// Only the fields we need from an account
+type MinimalAccount = { id: string; name: string };
 
 interface DeleteAccountButtonProps {
-  account: Account;
+  account: MinimalAccount;
   transactionCount: number;
 }
 
@@ -35,7 +36,7 @@ export function DeleteAccountButton({ account, transactionCount }: DeleteAccount
     
     try {
       await deleteAccountMutation.mutateAsync(account.id);
-      toast.success(`Cuenta "${account.name}" eliminada correctamente`);
+  toast.success(`Cuenta &quot;${account.name}&quot; eliminada correctamente`);
       router.push('/accounts');
       router.refresh();
     } catch (error) {
@@ -70,14 +71,14 @@ export function DeleteAccountButton({ account, transactionCount }: DeleteAccount
           <AlertDialogDescription>
             {isDisabled ? (
               <>
-                No se puede eliminar la cuenta <strong>"{account.name}"</strong> porque tiene{' '}
+                No se puede eliminar la cuenta <strong>&quot;{account.name}&quot;</strong> porque tiene{' '}
                 <strong>{transactionCount}</strong> transacción{transactionCount !== 1 ? 'es' : ''} asociada{transactionCount !== 1 ? 's' : ''}.
                 <br /><br />
                 Para eliminar esta cuenta, primero debe eliminar o transferir todas las transacciones asociadas.
               </>
             ) : (
               <>
-                Esta acción eliminará permanentemente la cuenta <strong>"{account.name}"</strong>.
+                Esta acción eliminará permanentemente la cuenta <strong>&quot;{account.name}&quot;</strong>.
                 Esta acción no se puede deshacer.
               </>
             )}

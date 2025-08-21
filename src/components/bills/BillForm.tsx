@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { X, Loader2 } from 'lucide-react';
 import { useBills } from '@/hooks/use-bills';
-import { useCategories } from '@/hooks/use-categories';
+import { useCategories, useCreateCategory } from '@/hooks/use-categories';
 import { toast } from 'react-hot-toast';
 
 interface BillFormProps {
@@ -22,7 +22,10 @@ interface BillFormProps {
 export function BillForm({ onClose, onSuccess, bill }: BillFormProps) {
   const { createBill, updateBill } = useBills();
   const { categories } = useCategories();
+  const createCategory = useCreateCategory();
   const [isLoading, setIsLoading] = useState(false);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState('');
   
   const [formData, setFormData] = useState({
     name: bill?.name || '',
@@ -96,6 +99,24 @@ export function BillForm({ onClose, onSuccess, bill }: BillFormProps) {
     }));
   };
 
+  const handleCreateCategory = async () => {
+    const name = newCategory.trim();
+    if (!name) return;
+    try {
+      setIsLoading(true);
+      const cat = await createCategory.mutateAsync({ name });
+      setNewCategory('');
+      setCreatingCategory(false);
+      // Seleccionar automáticamente la nueva categoría
+      setFormData((prev) => ({ ...prev, categoryId: cat.id }));
+      toast.success('Categoría creada');
+    } catch (e) {
+      toast.error('No se pudo crear la categoría');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
@@ -160,13 +181,40 @@ export function BillForm({ onClose, onSuccess, bill }: BillFormProps) {
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories?.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
+                  {categories && categories.length > 0 ? (
+                    categories.map((category: any) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1 text-sm text-muted-foreground">
+                      No hay categorías aún
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2 pt-2">
+                {!creatingCategory ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setCreatingCategory(true)}>
+                    + Crear nueva categoría
+                  </Button>
+                ) : (
+                  <div className="flex w-full gap-2">
+                    <Input
+                      placeholder="Nombre de la categoría"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                    />
+                    <Button type="button" size="sm" onClick={handleCreateCategory} disabled={isLoading || !newCategory.trim()}>
+                      Crear
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => { setCreatingCategory(false); setNewCategory(''); }}>
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">

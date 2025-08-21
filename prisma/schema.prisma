@@ -133,6 +133,7 @@ model Category {
   user         User                   @relation(fields: [userId], references: [id])
   transactions TransactionCategory[]
   budgets      BudgetCategory[]
+  bills        Bill[]
   
   @@map("categories")
 }
@@ -216,15 +217,19 @@ model BudgetCategory {
 model Bill {
   id           String   @id @default(cuid())
   name         String
+  description  String?
   amount       Decimal  @db.Decimal(15, 2)
   frequency    String   // monthly, weekly, yearly, etc.
   nextDueDate  DateTime
   active       Boolean  @default(true)
+  autoPayEnabled Boolean @default(false)
   userId       String
+  categoryId   String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
   user User @relation(fields: [userId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
   
   @@map("bills")
 }

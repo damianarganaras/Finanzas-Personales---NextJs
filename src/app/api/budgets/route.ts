@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { searchParams } = new URL(request.url)
+  const { searchParams } = new URL(request.url)
+  const userId = session.user!.id
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const active = searchParams.get('active')
@@ -42,9 +43,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Construir filtros
-    const where: any = {
-      userId: session.user.id,
-    }
+  const where: any = { userId }
 
     if (active !== null) {
       where.active = active === 'true'
@@ -65,8 +64,7 @@ export async function GET(request: NextRequest) {
               category: {
                 select: {
                   id: true,
-                  name: true,
-                  type: true
+                  name: true
                 }
               }
             }
@@ -107,7 +105,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const json = await request.json()
+  const json = await request.json()
+  const userId = session.user!.id
     const validatedData = createBudgetSchema.parse(json)
 
     // Validar que las fechas sean coherentes
@@ -122,10 +121,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar que las categorías existen y pertenecen al usuario
-    const categories = await db.category.findMany({
+  const categories = await db.category.findMany({
       where: {
         id: { in: validatedData.categoryIds },
-        userId: session.user.id
+    userId
       }
     })
 
@@ -139,11 +138,11 @@ export async function POST(request: NextRequest) {
     // Crear presupuesto con transacción
     const budget = await db.$transaction(async (prisma) => {
       // Crear el presupuesto
-      const newBudget = await prisma.budget.create({
+    const newBudget = await prisma.budget.create({
         data: {
           name: validatedData.name,
           active: validatedData.active,
-          userId: session.user.id,
+      userId,
         }
       })
 
@@ -175,8 +174,7 @@ export async function POST(request: NextRequest) {
               category: {
                 select: {
                   id: true,
-                  name: true,
-                  type: true
+                  name: true
                 }
               }
             }

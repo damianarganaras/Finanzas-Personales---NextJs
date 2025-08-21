@@ -1,23 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { z } from 'zod';
 
-const tagSchema = {
-  safeParse: (data: any) => {
-    if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
-      return {
-        success: false,
-        error: {
-          issues: [{ message: 'El nombre es requerido', path: ['name'] }]
-        }
-      };
-    }
-    return {
-      success: true,
-      data: { name: data.name.trim() }
-    };
-  }
-};
+const tagSchema = z.object({
+  name: z.string().trim().min(1, 'El nombre es requerido'),
+});
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,8 +48,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const validation = tagSchema.safeParse(body);
+  const body = await request.json();
+  const validation = tagSchema.safeParse(body);
 
     if (!validation.success) {
       return NextResponse.json(
@@ -73,7 +61,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name } = validation.data;
+  const { name } = validation.data;
 
     // Verificar que no existe un tag con el mismo nombre para este usuario
     const existingTag = await db.tag.findFirst({

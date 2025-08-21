@@ -5,7 +5,7 @@ export interface Account {
   name: string;
   accountTypeId: string;
   virtualBalance?: Decimal | null;
-  iban?: string;
+  iban?: string | null;
   active: boolean;
   userId: string;
   userGroupId: string;

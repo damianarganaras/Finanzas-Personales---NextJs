@@ -17,7 +17,8 @@
     "test:db": "vitest run src/test/database.test.ts src/test/database-constraints.test.ts",
     "test:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-test-db.ps1",
     "test:setup-bash": "bash ./scripts/setup-test-db.sh",
-    "db:test-reset": "DATABASE_URL=\"mysql://root:@localhost:3306/firefly_test\" npx prisma migrate reset --force"
+  "db:test-reset": "DATABASE_URL=\"mysql://root:@localhost:3306/firefly_test\" npx prisma migrate reset --force",
+  "db:normalize": "tsx scripts/normalize-data.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

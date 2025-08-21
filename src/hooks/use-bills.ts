@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import type { Bill } from '@/types/bill';
+import type { Bill, CreateBillData, UpdateBillData } from '@/types/bill';
 
 interface UseBillsReturn {
   bills: Bill[];
   loading: boolean;
   error: string | null;
-  createBill: (bill: Omit<Bill, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => Promise<Bill>;
-  updateBill: (id: string, bill: Partial<Bill>) => Promise<Bill>;
+  createBill: (bill: CreateBillData) => Promise<Bill>;
+  updateBill: (id: string, bill: UpdateBillData) => Promise<Bill>;
   deleteBill: (id: string) => Promise<void>;
   refresh: () => void;
 }
@@ -36,7 +36,7 @@ export function useBills(): UseBillsReturn {
     }
   };
 
-  const createBill = async (billData: Omit<Bill, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<Bill> => {
+  const createBill = async (billData: CreateBillData): Promise<Bill> => {
     try {
       const response = await fetch('/api/bills', {
         method: 'POST',
@@ -58,7 +58,7 @@ export function useBills(): UseBillsReturn {
     }
   };
 
-  const updateBill = async (id: string, billData: Partial<Bill>): Promise<Bill> => {
+  const updateBill = async (id: string, billData: UpdateBillData): Promise<Bill> => {
     try {
       const response = await fetch(`/api/bills/${id}`, {
         method: 'PUT',

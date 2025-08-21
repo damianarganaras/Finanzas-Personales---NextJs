@@ -44,11 +44,13 @@ const formSchema = z.object({
   date: z.date(),
   sourceAccountId: z.string().optional(),
   destinationAccountId: z.string().optional(),
-  categoryIds: z.array(z.string()).default([]),
-  tagIds: z.array(z.string()).default([]),
+  // Arrays required (defaults supplied via defaultValues)
+  categoryIds: z.array(z.string()),
+  tagIds: z.array(z.string()),
   notes: z.string().optional(),
 });
 
+// Use output type to match zodResolver's inferred return type
 type FormData = z.infer<typeof formSchema>;
 
 export default function CreateTransactionPage() {
@@ -59,7 +61,7 @@ export default function CreateTransactionPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newTagName, setNewTagName] = useState('');
 
-  const { accounts, loading: accountsLoading } = useAccounts();
+  const { data: accounts, isLoading: accountsLoading } = useAccounts();
   const { categories, loading: categoriesLoading } = useCategories();
   const { tags, loading: tagsLoading } = useTags();
   
@@ -86,8 +88,8 @@ export default function CreateTransactionPage() {
     setTransactionType(newType);
     form.setValue('type', newType);
     // Limpiar las cuentas seleccionadas al cambiar de tipo
-    form.setValue('sourceAccountId', undefined);
-    form.setValue('destinationAccountId', undefined);
+  form.setValue('sourceAccountId', '');
+  form.setValue('destinationAccountId', '');
   };
 
   const handleCreateCategory = async () => {
@@ -441,15 +443,16 @@ export default function CreateTransactionPage() {
                                 >
                                   <FormControl>
                                     <Checkbox
-                                      checked={field.value?.includes(category.id)}
+                                      checked={(field.value ?? []).includes(category.id)}
                                       onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, category.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== category.id
-                                              )
-                                            )
+                                        const current = field.value ?? [];
+                                        if (checked) {
+                                          if (!current.includes(category.id)) {
+                                            field.onChange([...current, category.id]);
+                                          }
+                                        } else {
+                                          field.onChange(current.filter((value: string) => value !== category.id));
+                                        }
                                       }}
                                     />
                                   </FormControl>
@@ -532,15 +535,16 @@ export default function CreateTransactionPage() {
                                 >
                                   <FormControl>
                                     <Checkbox
-                                      checked={field.value?.includes(tag.id)}
+                                      checked={(field.value ?? []).includes(tag.id)}
                                       onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, tag.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== tag.id
-                                              )
-                                            )
+                                        const current = field.value ?? [];
+                                        if (checked) {
+                                          if (!current.includes(tag.id)) {
+                                            field.onChange([...current, tag.id]);
+                                          }
+                                        } else {
+                                          field.onChange(current.filter((value: string) => value !== tag.id));
+                                        }
                                       }}
                                     />
                                   </FormControl>
