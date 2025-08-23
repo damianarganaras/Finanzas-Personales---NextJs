@@ -16,6 +16,8 @@ export function useTransactions() {
       }
       return response.json();
     },
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   return {

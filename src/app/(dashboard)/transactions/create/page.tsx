@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
@@ -67,6 +67,8 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function CreateTransactionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const typeParam = searchParams?.get('type');
   const [transactionType, setTransactionType] = useState<'withdrawal' | 'deposit' | 'transfer'>('withdrawal');
   const [isCreatingCategory, setIsCreatingCategory] = useState(false);
   const [isCreatingTag, setIsCreatingTag] = useState(false);
@@ -110,11 +112,27 @@ export default function CreateTransactionPage() {
     if (!newCategoryName.trim()) return;
 
     try {
-      await createCategoryMutation.mutateAsync({ name: newCategoryName.trim() });
+      // Optimistically select temp id before request
+      const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+      form.setValue('categoryIds', [...(form.getValues('categoryIds') || []), tempId], { shouldDirty: true });
+
+      const created = await createCategoryMutation.mutateAsync({ name: newCategoryName.trim() });
+      // Replace temp id with real id
+      form.setValue(
+        'categoryIds',
+        (form.getValues('categoryIds') || []).map((id) => (id === tempId ? created.id : id)),
+        { shouldDirty: true }
+      );
       setNewCategoryName('');
       setIsCreatingCategory(false);
       toast.success('Categoría creada correctamente');
     } catch (error) {
+      // Rollback optimistic selection
+      form.setValue(
+        'categoryIds',
+        (form.getValues('categoryIds') || []).filter((id) => !id.startsWith('temp-')),
+        { shouldDirty: true }
+      );
       toast.error('Error al crear la categoría');
     }
   };
@@ -123,11 +141,24 @@ export default function CreateTransactionPage() {
     if (!newTagName.trim()) return;
 
     try {
-      await createTagMutation.mutateAsync({ name: newTagName.trim() });
+      const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+      form.setValue('tagIds', [...(form.getValues('tagIds') || []), tempId], { shouldDirty: true });
+
+      const created = await createTagMutation.mutateAsync({ name: newTagName.trim() });
+      form.setValue(
+        'tagIds',
+        (form.getValues('tagIds') || []).map((id) => (id === tempId ? created.id : id)),
+        { shouldDirty: true }
+      );
       setNewTagName('');
       setIsCreatingTag(false);
       toast.success('Tag creado correctamente');
     } catch (error) {
+      form.setValue(
+        'tagIds',
+        (form.getValues('tagIds') || []).filter((id) => !id.startsWith('temp-')),
+        { shouldDirty: true }
+      );
       toast.error('Error al crear el tag');
     }
   };
@@ -309,7 +340,7 @@ export default function CreateTransactionPage() {
             </CardContent>
           </Card>
 
-          {/* Cuentas */}
+          {/* Cuentas (ocultas si es compra con tarjeta) */}
           <Card>
             <CardHeader>
               <CardTitle>Cuentas</CardTitle>
@@ -318,7 +349,18 @@ export default function CreateTransactionPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {accountsLoading ? (
+              {typeParam === 'credit_card_purchase' ? (
+                <div className="p-4 border rounded bg-yellow-50 text-yellow-900">
+                  <p className="text-sm mb-3">
+                    Para compras con tarjeta de crédito usá el formulario específico.
+                  </p>
+                  <Link href="/credit-cards/purchases/new">
+                    <Button size="sm">Registrar compra con tarjeta</Button>
+                  </Link>
+                </div>
+              ) : (
+                <>
+                {accountsLoading ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                   <p className="mt-2 text-sm text-gray-500">Cargando cuentas...</p>
@@ -346,7 +388,7 @@ export default function CreateTransactionPage() {
                             {transactionType === 'withdrawal' && ' (de donde sale el dinero)'}
                             {transactionType === 'transfer' && ' (cuenta origen)'}
                           </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecciona una cuenta" />
@@ -377,7 +419,7 @@ export default function CreateTransactionPage() {
                             {transactionType === 'deposit' && ' (donde entra el dinero)'}
                             {transactionType === 'transfer' && ' (cuenta destino)'}
                           </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecciona una cuenta" />
@@ -396,6 +438,8 @@ export default function CreateTransactionPage() {
                       )}
                     />
                   )}
+                </>
+                )}
                 </>
               )}
             </CardContent>
@@ -624,7 +668,7 @@ export default function CreateTransactionPage() {
 
           {/* Botones de acción */}
           <div className="flex justify-end space-x-4">
-            <Link href="/dashboard/transactions">
+            <Link href="/transactions">
               <Button variant="outline">
                 Cancelar
               </Button>

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Search, Filter, Download } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -32,8 +33,10 @@ function formatCurrency(amount: number, symbol: string = '$') {
 }
 
 export default function TransactionsPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  useEffect(() => { router.refresh(); /* ensure fresh data on entry */ }, []);
   
   const { transactions, loading, error } = useTransactions();
   const { stats, loading: statsLoading } = useTransactionStats();

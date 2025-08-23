@@ -1,19 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Calendar, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { BudgetForm } from '@/components/budgets/BudgetForm';
 import { BudgetList } from '@/components/budgets/BudgetList';
 import { useBudgets, useBudgetProgress } from '@/hooks/use-budgets';
 
 export default function BudgetsPage() {
+  const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const budgetsQuery = useBudgets();
   const progressQuery = useBudgetProgress();
+  useEffect(() => { router.refresh(); }, []);
   
   const budgetProgress = progressQuery.data?.progress || [];
   const isLoading = budgetsQuery.isLoading || progressQuery.isLoading;
@@ -77,6 +80,10 @@ export default function BudgetsPage() {
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Nuevo Presupuesto</DialogTitle>
+              <DialogDescription>Define un presupuesto y su período</DialogDescription>
+            </DialogHeader>
             <BudgetForm 
               onSuccess={() => setShowCreateForm(false)}
               onCancel={() => setShowCreateForm(false)}

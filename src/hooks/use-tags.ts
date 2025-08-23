@@ -44,7 +44,26 @@ export function useCreateTag() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onMutate: async (variables: { name: string }) => {
+      await queryClient.cancelQueries({ queryKey: [TAGS_QUERY_KEY] });
+      const previous = queryClient.getQueryData<Tag[]>([TAGS_QUERY_KEY]) || [];
+      const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+      const optimistic: Tag = { id: tempId, name: variables.name, userId: 'me' } as Tag;
+      queryClient.setQueryData<Tag[]>([TAGS_QUERY_KEY], (old = []) => [optimistic, ...old]);
+      return { previous, tempId };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([TAGS_QUERY_KEY], context.previous);
+      }
+    },
+    onSuccess: (data, _vars, context) => {
+      queryClient.setQueryData<Tag[]>([TAGS_QUERY_KEY], (old = []) => {
+        if (!context?.tempId) return [data as Tag, ...old];
+        return old.map((t) => (t.id === context.tempId ? (data as Tag) : t));
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: [TAGS_QUERY_KEY] });
     },
   });

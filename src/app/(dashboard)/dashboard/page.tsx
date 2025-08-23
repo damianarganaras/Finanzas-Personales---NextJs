@@ -7,6 +7,7 @@ import { RecentTransactionsList } from '@/components/dashboard/RecentTransaction
 import { CreditCardSummary } from '@/components/dashboard/CreditCardSummary';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { FinancialChart } from '@/components/dashboard/FinancialChart';
+import { DollarWidget } from '@/components/dashboard/DollarWidget';
 
 export default function DashboardPage() {
   return (
@@ -21,6 +22,11 @@ export default function DashboardPage() {
       
       {/* Métricas principales con datos reales */}
       <DashboardMetrics />
+
+      {/* Cotización rápida */}
+      <div className="grid gap-6 sm:grid-cols-2">
+        <DollarWidget />
+      </div>
 
       {/* Grid principal con información detallada */}
       <div className="grid gap-6 lg:grid-cols-4">

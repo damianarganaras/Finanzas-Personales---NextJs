@@ -44,7 +44,29 @@ export function useCreateCategory() {
 
       return response.json();
     },
-    onSuccess: () => {
+    // Optimistic update: insert temp category immediately, rollback on error, reconcile on success
+    onMutate: async (variables: { name: string }) => {
+      await queryClient.cancelQueries({ queryKey: [CATEGORIES_QUERY_KEY] });
+      const previous = queryClient.getQueryData<Category[]>([CATEGORIES_QUERY_KEY]) || [];
+      const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+      const optimistic: Category = { id: tempId, name: variables.name, userId: 'me' } as Category;
+      queryClient.setQueryData<Category[]>([CATEGORIES_QUERY_KEY], (old = []) => [optimistic, ...old]);
+      return { previous, tempId };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData([CATEGORIES_QUERY_KEY], context.previous);
+      }
+    },
+    onSuccess: (data, _vars, context) => {
+      // Replace temp item with server item, keeping selection order
+      queryClient.setQueryData<Category[]>([CATEGORIES_QUERY_KEY], (old = []) => {
+        if (!context?.tempId) return [data as Category, ...old];
+        return old.map((c) => (c.id === context.tempId ? (data as Category) : c));
+      });
+    },
+    onSettled: () => {
+      // Ensure sync with server
       queryClient.invalidateQueries({ queryKey: [CATEGORIES_QUERY_KEY] });
     },
   });
