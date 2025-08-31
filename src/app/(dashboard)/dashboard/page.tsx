@@ -8,6 +8,7 @@ import { CreditCardSummary } from '@/components/dashboard/CreditCardSummary';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { FinancialChart } from '@/components/dashboard/FinancialChart';
 import { DollarWidget } from '@/components/dashboard/DollarWidget';
+import { SavingGoalsList } from '@/components/saving-goals/SavingGoalsList';
 
 export default function DashboardPage() {
   return (
@@ -52,7 +53,7 @@ export default function DashboardPage() {
         {/* Gráfico financiero interactivo */}
         <FinancialChart />
 
-        {/* Próximas facturas y metas */}
+  {/* Próximas facturas y metas */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -69,20 +70,8 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base font-medium">Progreso de Metas</CardTitle>
-              <CardDescription>
-                Estado de tus objetivos de ahorro
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-6 text-muted-foreground">
-                <p className="text-sm">Funcionalidad en desarrollo</p>
-                <p className="text-xs mt-1">Próximamente: seguimiento de metas de ahorro</p>
-              </div>
-            </CardContent>
-          </Card>
+    {/* Metas de ahorro reales */}
+    <SavingGoalsList />
         </div>
       </div>
     </div>

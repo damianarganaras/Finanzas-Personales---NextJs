@@ -1,12 +1,55 @@
 ---
 applyTo: '**'
 ---
-# ANÁLISIS COMPLETO DEL PROYECTO FIREFLY III
-## REPLICACIÓN USANDO NEXT.JS 15 + TYPESCRIPT + TAILWIND
 
-### 1. ANÁLISIS DE LA ESTRUCTURA DEL PROYECTO
+<project_context>
+# FIREFLY NEXT - GESTOR FINANCIERO PERSONAL
+Replicación de Firefly III usando Next.js 15 + TypeScript + Tailwind CSS
 
-#### 1.1 Arquitectura General
+## Objetivo Principal
+Desarrollar una aplicación web completa de gestión financiera personal que replique y mejore las funcionalidades de Firefly III, utilizando tecnologías modernas de desarrollo web.
+</project_context>
+
+<code_editing_rules>
+<guiding_principles>
+- Cada componente debe ser modular, reutilizable y seguir las mejores prácticas de React
+- Priorizar la experiencia de usuario (UX) con interfaces intuitivas y responsivas
+- Implementar validaciones robustas tanto en cliente como servidor
+- Mantener consistencia en patrones de código y nomenclatura
+- Aplicar principios de accesibilidad (a11y) en todos los componentes
+- Optimizar para rendimiento con técnicas de Next.js 15
+</guiding_principles>
+
+<frontend_stack_defaults>
+- Framework: Next.js 15 (App Router)
+- Lenguaje: TypeScript (estricto)
+- Estilos: Tailwind CSS + shadcn/ui
+- Formularios: React Hook Form + Zod
+- Estado: TanStack Query + Zustand (selectivo)
+- Gráficos: Recharts
+- Iconos: Lucide React
+- Fechas: date-fns
+</frontend_stack_defaults>
+
+<backend_stack_defaults>
+- API: Next.js API Routes
+- Base de datos: MySQL con Prisma ORM
+- Autenticación: NextAuth.js v5
+- Validación: Zod (compartido con frontend)
+- Emails: Nodemailer (futuro)
+</backend_stack_defaults>
+
+<file_structure_standards>
+- Usar barrel exports en directorios de componentes
+- Nomenclatura: kebab-case para archivos, PascalCase para componentes
+- Colocar hooks personalizados en `/hooks` con prefijo `use-`
+- Tipos compartidos en `/types` organizados por dominio
+- Utilidades en `/lib` categorizadas por funcionalidad
+</file_structure_standards>
+</code_editing_rules>
+
+<architecture_analysis>
+### Análisis de Firefly III Original (Laravel)
 Firefly III es una aplicación web de gestión financiera personal desarrollada en Laravel (PHP). La aplicación sigue una arquitectura MVC con las siguientes características principales:
 
 **Backend (Laravel PHP):**
@@ -25,8 +68,10 @@ Firefly III es una aplicación web de gestión financiera personal desarrollada 
 **Frontend (Versiones múltiples):**
 - V1: AdminLTE + jQuery + Bootstrap
 - V2: AdminLTE 4 + Alpine.js + Bootstrap 5 + Vite
+</architecture_analysis>
 
-#### 1.2 Modelos de Datos Principales
+<data_models>
+### Modelos de Datos Principales
 
 **Entidades Core:**
 1. **Users** - Sistema de usuarios con grupos
@@ -52,8 +97,10 @@ Firefly III es una aplicación web de gestión financiera personal desarrollada 
 - Transaction -> Budget (N:N)
 - Transaction -> Category (N:N)
 - Transaction -> Tag (N:N)
+</data_models>
 
-#### 1.3 Funcionalidades Principales
+<feature_requirements>
+### Funcionalidades Principales
 
 **1. Gestión de Cuentas:**
 - Tipos: Activos, Pasivos, Gastos, Ingresos
@@ -119,8 +166,10 @@ Firefly III es una aplicación web de gestión financiera personal desarrollada 
 - `/api/v1/charts` - Datos para gráficos
 - `/api/v1/summary` - Resúmenes
 - `/api/v1/search` - Búsqueda
+</feature_requirements>
 
-### 2. ARQUITECTURA PROPUESTA PARA NEXT.JS 15
+<implementation_strategy>
+### Estrategia de Implementación para Next.js 15
 
 #### 2.1 Estructura del Proyecto Next.js
 
@@ -196,8 +245,10 @@ firefly-nextjs/
 - date-fns (fechas)
 - clsx (clases CSS)
 - lucide-react (iconos)
+</implementation_strategy>
 
-### 3. DISEÑO DE LA BASE DE DATOS
+<database_design>
+### Diseño de la Base de Datos
 
 #### 3.1 Esquema Principal (Prisma)
 
@@ -290,13 +341,13 @@ model BudgetLimit {
 // ... otros modelos
 ```
 
-### 4. PROMPT COMPLETO PARA REPLICACIÓN
-
-## PROMPT PARA DESARROLLAR FIREFLY III CON NEXT.JS 15
+# DEVELOPMENT PROMPT
 
 Desarrolla una aplicación completa de gestión financiera personal llamada "Firefly Next" usando las siguientes tecnologías:
+</database_design>
 
-### STACK TECNOLÓGICO REQUERIDO:
+<development_requirements>
+### Stack Tecnológico Requerido
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS
 - **Componentes**: Shadcn/ui
 - **Base de datos**: PostgreSQL con Prisma ORM
@@ -570,3 +621,20 @@ npx shadcn-ui@latest add select checkbox textarea tabs
 - Accesibilidad (a11y) básica implementada
 
 Desarrolla esta aplicación paso a paso, creando primero la estructura base y luego implementando cada módulo de forma incremental. Asegúrate de que cada funcionalidad esté completamente implementada antes de pasar a la siguiente.
+
+<self_reflection>
+- Evalúa la implementación actual antes de sugerir nuevas funcionalidades
+- Considera el contexto del proyecto y las funcionalidades ya existentes
+- Busca optimizaciones y mejoras en el código existente
+- Asegúrate de que los patrones de código sean consistentes
+- Valida que las nuevas características encajen con la arquitectura actual
+</self_reflection>
+
+<persistence>
+- No solicitar confirmación para suposiciones razonables sobre el contexto del proyecto
+- Implementar funcionalidades completas con todos los archivos necesarios
+- Resolver dependencias y tipos automáticamente
+- Usar los patrones existentes del proyecto como referencia
+- Proceder con implementaciones basadas en el análisis del código actual
+</persistence>
+</development_requirements>

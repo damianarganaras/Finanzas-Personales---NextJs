@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useCreditCards } from '@/hooks/use-credit-cards';
+import { useCategories, useCreateCategory } from '@/hooks/use-categories';
+import { useTags, useCreateTag } from '@/hooks/use-tags';
 import toast from 'react-hot-toast';
 
 const schema = z.object({
@@ -38,7 +40,10 @@ type FormData = z.infer<typeof schema>;
 export default function NewCreditCardPurchasePage() {
   const router = useRouter();
   const { creditCards, loading: cardsLoading } = useCreditCards();
-  // categories/tags selection UI can be added later; kept in payload API-compatible
+  const { categories } = useCategories();
+  const { tags } = useTags();
+  const createCategory = useCreateCategory();
+  const createTag = useCreateTag();
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -170,7 +175,97 @@ export default function NewCreditCardPurchasePage() {
                 </FormItem>
               )} />
 
-              {/* Simple multi-select via checkboxes for categories and tags could be added later */}
+              {/* Categorías (multi-select simple con checkboxes) */}
+              <div className="space-y-2">
+                <FormLabel>Categorías</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {categories?.map((c: any) => {
+                    const selected = (form.getValues('categoryIds') || []).includes(c.id);
+                    return (
+                      <label key={c.id} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={(e) => {
+                            const current = form.getValues('categoryIds') || [];
+                            form.setValue(
+                              'categoryIds',
+                              e.target.checked ? [...current, c.id] : current.filter((id) => id !== c.id),
+                              { shouldDirty: true }
+                            );
+                          }}
+                        />
+                        <span>{c.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <Input placeholder="Nueva categoría" onKeyDown={async (e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (e.key === 'Enter' && target.value.trim()) {
+                      e.preventDefault();
+                      try {
+                        const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+                        form.setValue('categoryIds', [...(form.getValues('categoryIds')||[]), tempId]);
+                        const created = await createCategory.mutateAsync({ name: target.value.trim() });
+                        form.setValue('categoryIds', (form.getValues('categoryIds')||[]).map((id)=> id===tempId? created.id: id));
+                        target.value = '';
+                        toast.success('Categoría creada');
+                      } catch {
+                        form.setValue('categoryIds', (form.getValues('categoryIds')||[]).filter((id)=>!id.startsWith('temp-')));
+                        toast.error('No se pudo crear la categoría');
+                      }
+                    }
+                  }} />
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-2">
+                <FormLabel>Etiquetas</FormLabel>
+                <div className="grid grid-cols-2 gap-2">
+                  {tags?.map((t: any) => {
+                    const selected = (form.getValues('tagIds') || []).includes(t.id);
+                    return (
+                      <label key={t.id} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={(e) => {
+                            const current = form.getValues('tagIds') || [];
+                            form.setValue(
+                              'tagIds',
+                              e.target.checked ? [...current, t.id] : current.filter((id) => id !== t.id),
+                              { shouldDirty: true }
+                            );
+                          }}
+                        />
+                        <span>{t.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2">
+                  <Input placeholder="Nuevo tag" onKeyDown={async (e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (e.key === 'Enter' && target.value.trim()) {
+                      e.preventDefault();
+                      try {
+                        const tempId = `temp-${Math.random().toString(36).slice(2)}`;
+                        form.setValue('tagIds', [...(form.getValues('tagIds')||[]), tempId]);
+                        const created = await createTag.mutateAsync({ name: target.value.trim() });
+                        form.setValue('tagIds', (form.getValues('tagIds')||[]).map((id)=> id===tempId? created.id: id));
+                        target.value = '';
+                        toast.success('Tag creado');
+                      } catch {
+                        form.setValue('tagIds', (form.getValues('tagIds')||[]).filter((id)=>!id.startsWith('temp-')));
+                        toast.error('No se pudo crear el tag');
+                      }
+                    }
+                  }} />
+                </div>
+              </div>
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => router.back()}>Cancelar</Button>

@@ -29,6 +29,7 @@ model User {
   tags                 Tag[]
   bills                Bill[]
   piggyBanks           PiggyBank[]
+  savingGoals          SavingGoal[]
   rules                Rule[]
   attachments          Attachment[]
   creditCards          CreditCard[]
@@ -301,6 +302,37 @@ model Attachment {
   user User @relation(fields: [userId], references: [id])
   
   @@map("attachments")
+}
+
+// Metas de ahorro (nueva implementación con moneda y aportes)
+model SavingGoal {
+  id            String   @id @default(cuid())
+  userId        String
+  name          String
+  currency      String   // 'ARS' | 'USD'
+  targetAmount  Decimal  @db.Decimal(15, 2)
+  currentAmount Decimal  @db.Decimal(15, 2) @default(0)
+  dueDate       DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user           User                   @relation(fields: [userId], references: [id])
+  contributions  SavingContribution[]
+
+  @@map("saving_goals")
+}
+
+model SavingContribution {
+  id       String   @id @default(cuid())
+  goalId   String
+  amount   Decimal  @db.Decimal(15, 2)
+  currency String   // 'ARS' | 'USD'
+  date     DateTime
+  createdAt DateTime @default(now())
+
+  goal SavingGoal @relation(fields: [goalId], references: [id])
+
+  @@map("saving_contributions")
 }
 
 // Tarjetas de crédito
