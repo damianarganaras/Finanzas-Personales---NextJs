@@ -3,25 +3,30 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 
-// Esquema de validación para configuraciones
-const userSettingsSchema = z.object({
-  currency: z.string().optional(),
-  language: z.string().optional(),
-  dateFormat: z.string().optional(),
-  numberFormat: z.string().optional(),
+// Esquemas de validación para configuraciones
+const notificationsSchema = z.object({
+  email: z.boolean().optional(),
+  browser: z.boolean().optional(),
+  billReminders: z.boolean().optional(),
+  budgetAlerts: z.boolean().optional(),
+}).partial().optional();
+
+const dashboardSchema = z.object({
+  showAccountBalances: z.boolean().optional(),
+  showRecentTransactions: z.boolean().optional(),
+  showUpcomingBills: z.boolean().optional(),
+  defaultPeriod: z.enum(['7', '30', '90', '365']).optional(),
+}).partial().optional();
+
+const settingsBodySchema = z.object({
+  defaultCurrency: z.string().regex(/^[A-Z]{3}$/).optional(),
+  language: z.enum(['es', 'en', 'pt']).optional(),
+  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']).optional(),
+  numberFormat: z.string().regex(/^[a-z]{2}-[A-Z]{2}$/).optional(),
   theme: z.enum(['light', 'dark', 'system']).optional(),
-  notifications: z.object({
-    email: z.boolean().optional(),
-    browser: z.boolean().optional(),
-    billReminders: z.boolean().optional(),
-    budgetAlerts: z.boolean().optional(),
-  }).optional(),
-  dashboard: z.object({
-    showAccountBalances: z.boolean().optional(),
-    showRecentTransactions: z.boolean().optional(),
-    showUpcomingBills: z.boolean().optional(),
-    defaultPeriod: z.enum(['7', '30', '90', '365']).optional(),
-  }).optional(),
+  // Usamos dashboardWidgets (Json) como contenedor de preferencias extendidas
+  notifications: notificationsSchema,
+  dashboard: dashboardSchema,
 });
 
 export async function GET() {
@@ -46,9 +51,26 @@ export async function GET() {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
-    // Obtener configuraciones del usuario (usando metadata o tabla separada)
-    // Por ahora usaremos valores por defecto más metadata del usuario
-    const settings = {
+  const existing = await db.userSettings.findUnique({ where: { userId: user.id } }).catch(() => null);
+  const persisted = existing ?? await db.userSettings.create({
+      data: {
+        userId: user.id,
+      },
+    });
+
+    // Parse extended preferences from persisted JSON
+    const extended = ((): {
+      notifications?: { email: boolean; browser: boolean; billReminders: boolean; budgetAlerts: boolean };
+      dashboard?: { showAccountBalances: boolean; showRecentTransactions: boolean; showUpcomingBills: boolean; defaultPeriod: '7'|'30'|'90'|'365' };
+    } => {
+      try {
+        return (persisted.dashboardWidgets as any) ?? {};
+      } catch {
+        return {} as any;
+      }
+    })();
+
+    const response = {
       user: {
         name: user.name,
         email: user.email,
@@ -57,43 +79,33 @@ export async function GET() {
         userGroupTitle: user.userGroup.title,
       },
       preferences: {
-        currency: 'USD', // Por defecto, se puede obtener de user metadata
-        language: 'es',
-        dateFormat: 'DD/MM/YYYY',
-        numberFormat: 'en-US',
-        theme: 'system',
+        currency: persisted.defaultCurrency,
+        language: persisted.language,
+        dateFormat: persisted.dateFormat,
+        numberFormat: persisted.numberFormat,
+        theme: (persisted.theme as 'light' | 'dark' | 'system') ?? 'light',
       },
       notifications: {
-        email: true,
-        browser: true,
-        billReminders: true,
-        budgetAlerts: true,
+        email: extended.notifications?.email ?? true,
+        browser: extended.notifications?.browser ?? true,
+        billReminders: extended.notifications?.billReminders ?? true,
+        budgetAlerts: extended.notifications?.budgetAlerts ?? true,
       },
       dashboard: {
-        showAccountBalances: true,
-        showRecentTransactions: true,
-        showUpcomingBills: true,
-        defaultPeriod: '30',
+        showAccountBalances: extended.dashboard?.showAccountBalances ?? true,
+        showRecentTransactions: extended.dashboard?.showRecentTransactions ?? true,
+        showUpcomingBills: extended.dashboard?.showUpcomingBills ?? true,
+        defaultPeriod: (extended.dashboard?.defaultPeriod ?? '30') as '7' | '30' | '90' | '365',
       },
       statistics: {
-        accountCount: await db.account.count({
-          where: { userId: user.id }
-        }),
-        transactionCount: await db.transaction.count({
-          where: { 
-            account: { userId: user.id }
-          }
-        }),
-        budgetCount: await db.budget.count({
-          where: { userId: user.id }
-        }),
-        billCount: await db.bill.count({
-          where: { userId: user.id }
-        }),
-      }
+        accountCount: await db.account.count({ where: { userId: user.id } }),
+        transactionCount: await db.transaction.count({ where: { account: { userId: user.id } } }),
+        budgetCount: await db.budget.count({ where: { userId: user.id } }),
+        billCount: await db.bill.count({ where: { userId: user.id } }),
+      },
     };
 
-    return NextResponse.json(settings);
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching user settings:', error);
     return NextResponse.json(
@@ -112,7 +124,17 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedData = userSettingsSchema.parse(body);
+    // Backward-compatible mapping (currency -> defaultCurrency)
+    const candidate = {
+      defaultCurrency: body.defaultCurrency ?? body.currency,
+      language: body.language,
+      dateFormat: body.dateFormat,
+      numberFormat: body.numberFormat,
+      theme: body.theme,
+      notifications: body.notifications,
+      dashboard: body.dashboard,
+    };
+    const validatedData = settingsBodySchema.parse(candidate);
 
     // Buscar el usuario
     const user = await db.user.findUnique({
@@ -125,16 +147,49 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 });
     }
 
-    // Actualizar información básica del usuario si se proporciona
-    if (validatedData.currency || validatedData.language || validatedData.theme) {
-      // En un futuro, esto se guardaría en una tabla UserSettings
-      // Por ahora, simulamos la actualización
-      console.log('Updating user preferences:', validatedData);
-    }
+    // Fetch current to merge JSON content safely
+    const current = await db.userSettings.findUnique({ where: { userId: user.id } });
 
-    return NextResponse.json({ 
+    const currentExtended = ((): any => {
+      try { return (current?.dashboardWidgets as any) ?? {}; } catch { return {}; }
+    })();
+
+    const newExtended = {
+      ...currentExtended,
+      notifications: {
+        ...(currentExtended.notifications ?? {}),
+        ...(validatedData.notifications ?? {}),
+      },
+      dashboard: {
+        ...(currentExtended.dashboard ?? {}),
+        ...(validatedData.dashboard ?? {}),
+      },
+    };
+
+  const updated = await db.userSettings.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        defaultCurrency: validatedData.defaultCurrency,
+        language: validatedData.language,
+        dateFormat: validatedData.dateFormat,
+        numberFormat: validatedData.numberFormat,
+        theme: validatedData.theme,
+        dashboardWidgets: newExtended,
+      },
+      update: {
+        defaultCurrency: validatedData.defaultCurrency,
+        language: validatedData.language,
+        dateFormat: validatedData.dateFormat,
+        numberFormat: validatedData.numberFormat,
+        theme: validatedData.theme,
+        dashboardWidgets: newExtended,
+      },
+    });
+
+    return NextResponse.json({
       message: 'Configuración actualizada exitosamente',
-      settings: validatedData
+      settings: updated,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -202,32 +257,39 @@ export async function POST(request: NextRequest) {
           data: exportData
         });
 
-      case 'reset_preferences':
-        // Resetear preferencias a valores por defecto
-        const defaultSettings = {
-          currency: 'USD',
-          language: 'es',
-          dateFormat: 'DD/MM/YYYY',
-          numberFormat: 'en-US',
-          theme: 'system',
-          notifications: {
-            email: true,
-            browser: true,
-            billReminders: true,
-            budgetAlerts: true,
+      case 'reset_preferences': {
+        // Persist defaults in DB and return DB row
+        const reset = await db.userSettings.upsert({
+          where: { userId: user.id },
+          create: { userId: user.id },
+          update: {
+            defaultCurrency: 'ARS',
+            language: 'es',
+            dateFormat: 'DD/MM/YYYY',
+            numberFormat: 'es-AR',
+            theme: 'light',
+            dashboardWidgets: {
+              notifications: {
+                email: true,
+                browser: true,
+                billReminders: true,
+                budgetAlerts: true,
+              },
+              dashboard: {
+                showAccountBalances: true,
+                showRecentTransactions: true,
+                showUpcomingBills: true,
+                defaultPeriod: '30',
+              }
+            },
           },
-          dashboard: {
-            showAccountBalances: true,
-            showRecentTransactions: true,
-            showUpcomingBills: true,
-            defaultPeriod: '30',
-          }
-        };
+        });
 
         return NextResponse.json({
           message: 'Preferencias restablecidas exitosamente',
-          settings: defaultSettings
+          settings: reset,
         });
+      }
 
       default:
         return NextResponse.json(

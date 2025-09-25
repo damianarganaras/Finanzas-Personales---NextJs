@@ -29,7 +29,8 @@ const navigation = [
   { name: 'Tarjetas de Crédito', href: '/credit-cards', icon: CreditCard },
   { name: 'Presupuestos', href: '/budgets', icon: Target },
   { name: 'Facturas', href: '/bills', icon: Receipt },
-  { name: 'Metas de Ahorro', href: '/piggy-banks', icon: PiggyBank },
+  // PiggyBank deprecado en favor de Saving Goals; oculto en navegación
+  // { name: 'Metas de Ahorro', href: '/piggy-banks', icon: PiggyBank },
   { name: 'Reportes', href: '/reports', icon: BarChart3 },
   { name: 'Configuración', href: '/settings', icon: Settings },
 ];

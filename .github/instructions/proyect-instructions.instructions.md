@@ -638,3 +638,260 @@ Desarrolla esta aplicación paso a paso, creando primero la estructura base y lu
 - Proceder con implementaciones basadas en el análisis del código actual
 </persistence>
 </development_requirements>
+
+<analysis_prompt>
+<project_context>
+# FIREFLY NEXT - ANÁLISIS INTEGRAL Y PLANIFICACIÓN DE DESARROLLO
+Sistema de gestión financiera personal basado en Next.js 15 + TypeScript + Prisma
+
+## Objetivo de Análisis
+Realizar una auditoría completa del proyecto para identificar el estado actual del backend y frontend, detectar funcionalidades faltantes, incompletas o con oportunidades de mejora, y crear un plan de desarrollo incremental estructurado.
+</project_context>
+
+<analysis_scope>
+<backend_analysis>
+- Auditar todos los endpoints API existentes en src/app/api/
+- Revisar esquema de base de datos en prisma/schema.prisma
+- Evaluar hooks personalizados en src/hooks/
+- Analizar validaciones Zod en src/lib/validations.ts
+- Verificar tipos TypeScript en src/types/
+- Examinar lógica de negocio y utilidades en src/lib/
+- Identificar patrones de autenticación y autorización
+- Revisar manejo de errores y respuestas API
+</backend_analysis>
+
+<frontend_analysis>
+- Auditar páginas existentes en src/app/(dashboard)/ y src/app/(auth)/
+- Revisar componentes UI en src/components/
+- Evaluar formularios y validaciones cliente
+- Analizar estado global y gestión de datos
+- Verificar navegación y routing
+- Examinar responsividad y accesibilidad
+- Identificar patrones de diseño y consistencia
+- Revisar integración con APIs backend
+</frontend_analysis>
+
+<database_analysis>
+- Examinar modelos Prisma y relaciones
+- Verificar integridad referencial
+- Analizar índices y optimizaciones
+- Revisar migraciones existentes
+- Identificar tablas faltantes o incompletas
+- Evaluar normalización y estructura
+</database_analysis>
+</analysis_scope>
+
+<analysis_methodology>
+<systematic_review>
+- Revisar cada archivo de forma meticulosa
+- Documentar funcionalidades por módulo
+- Identificar patrones y antipatrones
+- Evaluar completitud de implementaciones
+- Detectar inconsistencias entre backend/frontend
+- Analizar cobertura de casos de uso
+</systematic_review>
+
+<categorization_criteria>
+- ✅ COMPLETO: Funcionalidad totalmente implementada y funcional
+- 🔄 INCOMPLETO: Implementación parcial que requiere completarse
+- ❌ FALTANTE: Funcionalidad no implementada pero necesaria
+- 🎯 RECOMENDADO: Funcionalidad que agregaría valor al sistema
+- ⚠️ PROBLEMÁTICO: Implementación con errores o mejoras necesarias
+</categorization_criteria>
+</analysis_methodology>
+
+<financial_domain_context>
+<core_features>
+- Gestión de cuentas (activos, pasivos, gastos, ingresos)
+- Transacciones (retiros, depósitos, transferencias)
+- Categorización y etiquetado
+- Presupuestos y límites de gasto
+- Facturas recurrentes y recordatorios
+- Metas de ahorro (piggy banks)
+- Reportes y análisis financiero
+- Importación/exportación de datos
+- Configuración y preferencias
+- Autenticación y autorización
+</core_features>
+
+<advanced_features>
+- Reglas de automatización
+- Reconciliación de cuentas
+- Soporte multi-moneda
+- Análisis predictivo
+- Alertas y notificaciones
+- Archivos adjuntos
+- API externa para integraciones
+- Dashboard personalizable
+- Exportación de reportes
+- Gestión de usuarios familiares
+</advanced_features>
+</financial_domain_context>
+
+<development_planning>
+<phase_structure>
+1. **BACKEND FOUNDATION** - Completar APIs core y lógica de negocio
+2. **DATABASE OPTIMIZATION** - Optimizar esquemas y relaciones
+3. **FRONTEND CORE** - Implementar pantallas principales
+4. **INTEGRATION** - Conectar frontend con backend
+5. **ADVANCED FEATURES** - Funcionalidades avanzadas
+6. **POLISH & OPTIMIZATION** - Refinamiento y optimización
+</phase_structure>
+
+<deliverable_structure>
+Para cada fase:
+- Lista de tareas específicas con prioridad
+- Archivos a crear/modificar
+- Dependencias entre tareas
+- Criterios de aceptación
+- Estimación de esfuerzo
+- Tests requeridos
+</deliverable_structure>
+</development_planning>
+
+<documentation_requirements>
+<analysis_output>
+- Estado actual detallado por módulo
+- Matriz de funcionalidades (completo/incompleto/faltante)
+- Diagramas de arquitectura actual
+- Identificación de deuda técnica
+- Recomendaciones de mejora
+- Plan de desarrollo incremental
+</analysis_output>
+
+<tracking_system>
+- Checklist de progreso por fase
+- Documentación de decisiones técnicas
+- Registro de cambios en arquitectura
+- Métricas de completitud
+- Roadmap visual del desarrollo
+</tracking_system>
+</documentation_requirements>
+
+<execution_instructions>
+<step_by_step>
+1. **ANÁLISIS BACKEND COMPLETO**
+  - Examinar cada endpoint API existente
+  - Revisar implementación vs. especificación
+  - Identificar endpoints faltantes
+  - Evaluar validaciones y manejo de errores
+  - Documentar estado de cada funcionalidad
+
+2. **ANÁLISIS DE BASE DE DATOS**
+  - Revisar esquema Prisma completo
+  - Evaluar relaciones y constraintss
+  - Identificar tablas/campos faltantes
+  - Analizar necesidades de optimización
+  - Verificar integridad de datos
+
+3. **ANÁLISIS FRONTEND COMPLETO**
+  - Auditar todas las páginas existentes
+  - Revisar componentes y su reutilización
+  - Evaluar formularios y validaciones
+  - Identificar pantallas faltantes
+  - Analizar UX/UI y consistencia
+
+4. **MATRIZ DE FUNCIONALIDADES**
+  - Crear tabla completa de features
+  - Marcar estado actual de cada una
+  - Priorizar según importancia
+  - Identificar dependencias
+  - Estimar esfuerzo de desarrollo
+
+5. **PLAN DE DESARROLLO INCREMENTAL**
+  - Dividir en fases manejables
+  - Definir entregables por fase
+  - Establecer criterios de éxito
+  - Crear roadmap visual
+  - Documentar decisiones arquitectónicas
+</step_by_step>
+</execution_instructions>
+
+<output_format>
+<structured_documentation>
+# FIREFLY NEXT - ANÁLISIS INTEGRAL DEL PROYECTO
+
+## 📊 ESTADO ACTUAL DEL BACKEND
+### APIs Implementadas
+- [Lista detallada con estado]
+
+### APIs Faltantes
+- [Lista con prioridad]
+
+### Lógica de Negocio
+- [Análisis de completitud]
+
+## 🗄️ ANÁLISIS DE BASE DE DATOS
+### Modelos Existentes
+- [Revisión completa]
+
+### Optimizaciones Necesarias
+- [Recomendaciones específicas]
+
+## 🎨 ESTADO ACTUAL DEL FRONTEND
+### Páginas Implementadas
+- [Lista con funcionalidad]
+
+### Componentes Reutilizables
+- [Inventario y gaps]
+
+### UX/UI Consistency
+- [Análisis y mejoras]
+
+## 📋 MATRIZ DE FUNCIONALIDADES
+| Funcionalidad | Backend | Frontend | Estado | Prioridad |
+|---------------|---------|----------|--------|-----------|
+| [Tabla completa] | | | | |
+
+## 🚀 PLAN DE DESARROLLO INCREMENTAL
+### Fase 1: Backend Foundation
+- [Tareas específicas]
+
+### Fase 2: Database Optimization  
+- [Tareas específicas]
+
+### [Continuar con todas las fases]
+
+## 📈 ROADMAP VISUAL
+- [Cronograma y dependencias]
+
+## 🎯 RECOMENDACIONES ESTRATÉGICAS
+- [Mejoras arquitectónicas]
+- [Oportunidades de optimización]
+- [Consideraciones futuras]
+</structured_documentation>
+</output_format>
+
+<quality_assurance>
+<completeness_check>
+- Verificar que se han revisado todos los archivos relevantes
+- Asegurar que no se han omitido funcionalidades
+- Validar que las recomendaciones son específicas y accionables
+- Confirmar que el plan es incremental y manejable
+</completeness_check>
+
+<consistency_validation>
+- Mantener nomenclatura consistente
+- Seguir patrones establecidos del proyecto
+- Usar terminología técnica apropiada
+- Asegurar coherencia entre análisis y plan
+</consistency_validation>
+</quality_assurance>
+
+<self_reflection>
+- Evalúo exhaustivamente cada componente del proyecto actual
+- Considero el contexto específico de finanzas personales
+- Priorizo según impacto en la experiencia del usuario
+- Identifico oportunidades de mejora arquitectónica
+- Creo un plan realista y ejecutable
+- Documento decisiones para referencia futura
+</self_reflection>
+
+<persistence>
+- Analizar todo el código sin solicitar confirmaciones
+- Crear documentación completa y detallada
+- Generar plan de desarrollo específico y accionable
+- Usar patrones y convenciones del proyecto existente
+- Proceder con análisis técnico profundo
+</persistence>
+</analysis_prompt>

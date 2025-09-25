@@ -33,6 +33,8 @@ model User {
   rules                Rule[]
   attachments          Attachment[]
   creditCards          CreditCard[]
+  // Preferencias del usuario (relación 1:1)
+  settings             UserSettings?
   
   @@map("users")
 }
@@ -103,6 +105,7 @@ model TransactionJournal {
   transactions Transaction[]
   
   @@map("transaction_journals")
+  @@index([userId, date])
 }
 
 // Transacciones individuales
@@ -121,8 +124,11 @@ model Transaction {
   tags                 TransactionTag[]
   creditCardPurchase   CreditCardPurchase?
   installmentPayment   InstallmentPayment?
+  attachments         Attachment[]
   
   @@map("transactions")
+  @@index([accountId, createdAt])
+  @@index([transactionJournalId])
 }
 
 // Categorías
@@ -137,6 +143,7 @@ model Category {
   bills        Bill[]
   
   @@map("categories")
+  @@index([userId, name])
 }
 
 // Relación many-to-many entre transacciones y categorías
@@ -161,6 +168,7 @@ model Tag {
   transactions TransactionTag[]
   
   @@map("tags")
+  @@index([userId, name])
 }
 
 // Relación many-to-many entre transacciones y etiquetas
@@ -200,6 +208,7 @@ model BudgetLimit {
   budget    Budget @relation(fields: [budgetId], references: [id])
   
   @@map("budget_limits")
+  @@index([budgetId, startDate, endDate])
 }
 
 // Relación many-to-many entre presupuestos y categorías
@@ -231,8 +240,10 @@ model Bill {
   
   user User @relation(fields: [userId], references: [id])
   category Category? @relation(fields: [categoryId], references: [id])
+  attachments Attachment[]
   
   @@map("bills")
+  @@index([userId, nextDueDate])
 }
 
 // Metas de ahorro (Piggy Banks)
@@ -298,10 +309,18 @@ model Attachment {
   size         Int
   userId       String
   createdAt    DateTime @default(now())
+  // Asociaciones opcionales
+  transactionId String?
+  billId        String?
   
   user User @relation(fields: [userId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  bill        Bill?        @relation(fields: [billId], references: [id], onDelete: SetNull)
   
   @@map("attachments")
+  @@index([userId, createdAt])
+  @@index([transactionId])
+  @@index([billId])
 }
 
 // Metas de ahorro (nueva implementación con moneda y aportes)
@@ -333,6 +352,7 @@ model SavingContribution {
   goal SavingGoal @relation(fields: [goalId], references: [id])
 
   @@map("saving_contributions")
+  @@index([goalId, date])
 }
 
 // Tarjetas de crédito
@@ -395,4 +415,22 @@ model InstallmentPayment {
   
   @@unique([creditCardPurchaseId, installmentNumber])
   @@map("installment_payments")
+}
+
+// Configuración persistente del usuario
+model UserSettings {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  defaultCurrency  String   @default("ARS")
+  language         String   @default("es")
+  dateFormat       String   @default("DD/MM/YYYY")
+  numberFormat     String   @default("es-AR")
+  theme            String   @default("light")
+  dashboardWidgets Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }

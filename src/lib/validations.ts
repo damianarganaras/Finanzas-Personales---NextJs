@@ -82,3 +82,14 @@ export type TransactionFormData = z.infer<typeof transactionSchema>;
 export type CategoryFormData = z.infer<typeof categorySchema>;
 export type BudgetFormData = z.infer<typeof budgetSchema>;
 export type BillFormData = z.infer<typeof billSchema>;
+
+// UserSettings validation (shared)
+export const userSettingsSchema = z.object({
+  defaultCurrency: z.enum(['ARS', 'USD', 'EUR']).default('ARS'),
+  language: z.enum(['es', 'en']).default('es'),
+  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']).default('DD/MM/YYYY'),
+  numberFormat: z.enum(['es-AR', 'en-US', 'en-GB']).default('es-AR'),
+  theme: z.enum(['light', 'dark', 'system']).default('light'),
+  dashboardWidgets: z.record(z.boolean()).optional(),
+});
+export type UserSettingsData = z.infer<typeof userSettingsSchema>;
