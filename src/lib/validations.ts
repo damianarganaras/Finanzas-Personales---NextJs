@@ -85,11 +85,22 @@ export type BillFormData = z.infer<typeof billSchema>;
 
 // UserSettings validation (shared)
 export const userSettingsSchema = z.object({
-  defaultCurrency: z.enum(['ARS', 'USD', 'EUR']).default('ARS'),
-  language: z.enum(['es', 'en']).default('es'),
-  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']).default('DD/MM/YYYY'),
-  numberFormat: z.enum(['es-AR', 'en-US', 'en-GB']).default('es-AR'),
-  theme: z.enum(['light', 'dark', 'system']).default('light'),
+  defaultCurrency: z.enum(['ARS', 'USD', 'EUR']),
+  language: z.enum(['es', 'en']),
+  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']),
+  numberFormat: z.enum(['es-AR', 'en-US', 'en-GB']),
+  theme: z.enum(['light', 'dark', 'system']),
   dashboardWidgets: z.record(z.boolean()).optional(),
 });
+
+export const userSettingsInputSchema = z.object({
+  defaultCurrency: z.enum(['ARS', 'USD', 'EUR']).optional(),
+  language: z.enum(['es', 'en']).optional(),
+  dateFormat: z.enum(['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD']).optional(),
+  numberFormat: z.enum(['es-AR', 'en-US', 'en-GB']).optional(),
+  theme: z.enum(['light', 'dark', 'system']).optional(),
+  dashboardWidgets: z.record(z.boolean()).optional(),
+});
+
 export type UserSettingsData = z.infer<typeof userSettingsSchema>;
+export type UserSettingsInput = z.infer<typeof userSettingsInputSchema>;

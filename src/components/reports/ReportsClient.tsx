@@ -5,6 +5,7 @@ import { useReports } from '@/hooks/use-reports';
 import { SpendingChart } from '@/components/reports/SpendingChart';
 import { IncomeChart } from '@/components/reports/IncomeChart';
 import { CategoryBreakdown } from '@/components/reports/CategoryBreakdown';
+import { ReportFilters } from '@/components/reports/ReportFilters';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
 
@@ -37,6 +38,9 @@ export function ReportsClient() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Advanced Filters */}
+      <ReportFilters />
 
       {loading && (
         <Card>

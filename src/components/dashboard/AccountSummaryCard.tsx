@@ -3,9 +3,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Wallet, TrendingUp, TrendingDown, Plus } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Wallet, TrendingUp, TrendingDown, Plus, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { useAccounts } from '@/hooks/use-accounts';
+import { useUserSettings } from '@/hooks/use-user-settings';
+import { createFormattersFromSettings } from '@/lib/utils/formatters';
 import { getAccountTypeName, getAccountTypeColor } from '@/lib/account-types';
 import { getAccountTypeIcon } from '@/lib/account-type-helpers';
 
@@ -15,8 +18,11 @@ interface AccountSummaryCardProps {
 
 export function AccountSummaryCard({ className }: AccountSummaryCardProps) {
   const { data: accounts, isLoading, error } = useAccounts();
+  const { userSettings, isLoading: settingsLoading } = useUserSettings();
 
-  if (isLoading) {
+  const formatters = createFormattersFromSettings(userSettings || null);
+
+  if (isLoading || settingsLoading) {
     return (
       <Card className={className}>
         <CardHeader>
@@ -27,12 +33,9 @@ export function AccountSummaryCard({ className }: AccountSummaryCardProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
-              </div>
-            ))}
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
           </div>
         </CardContent>
       </Card>
@@ -82,14 +85,56 @@ export function AccountSummaryCard({ className }: AccountSummaryCardProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Patrimonio Neto */}
-        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+        {/* Total Assets */}
+        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950 rounded-lg">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-green-600" />
-            <span className="font-medium">Patrimonio Neto</span>
+            <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <span className="font-medium text-green-800 dark:text-green-200">Total Activos</span>
           </div>
-          <span className="font-bold text-lg">
-            ${netWorth.toFixed(2)}
+          <span className="font-bold text-lg text-green-800 dark:text-green-200">
+            {formatters.formatCurrency(assetTotal)}
+          </span>
+        </div>
+
+        {/* Total Liabilities */}
+        {liabilityTotal > 0 && (
+          <div className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950 rounded-lg">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <span className="font-medium text-red-800 dark:text-red-200">Total Pasivos</span>
+            </div>
+            <span className="font-bold text-lg text-red-800 dark:text-red-200">
+              {formatters.formatCurrency(Math.abs(liabilityTotal))}
+            </span>
+          </div>
+        )}
+
+        {/* Net Worth */}
+        <div className={`flex items-center justify-between p-3 rounded-lg ${
+          netWorth >= 0 
+            ? 'bg-blue-50 dark:bg-blue-950' 
+            : 'bg-orange-50 dark:bg-orange-950'
+        }`}>
+          <div className="flex items-center gap-2">
+            <DollarSign className={`h-4 w-4 ${
+              netWorth >= 0 
+                ? 'text-blue-600 dark:text-blue-400' 
+                : 'text-orange-600 dark:text-orange-400'
+            }`} />
+            <span className={`font-medium ${
+              netWorth >= 0 
+                ? 'text-blue-800 dark:text-blue-200' 
+                : 'text-orange-800 dark:text-orange-200'
+            }`}>
+              Patrimonio Neto
+            </span>
+          </div>
+          <span className={`font-bold text-lg ${
+            netWorth >= 0 
+              ? 'text-blue-800 dark:text-blue-200' 
+              : 'text-orange-800 dark:text-orange-200'
+          }`}>
+            {formatters.formatCurrency(netWorth)}
           </span>
         </div>
 
@@ -106,7 +151,7 @@ export function AccountSummaryCard({ className }: AccountSummaryCardProps) {
                   </span>
                 </div>
                 <span className="text-sm font-medium">
-                  ${total.toFixed(2)}
+                  {formatters.formatCurrency(total)}
                 </span>
               </div>
             );
