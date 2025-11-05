@@ -1,4 +1,4 @@
-# Firefly III Next.js - Sistema de Gestión Financiera Personal
+# III Next.js - Sistema de Gestión Financiera Personal
 
 Un sistema completo de gestión financiera personal construido con Next.js 15, TypeScript, Prisma y MySQL.
 
