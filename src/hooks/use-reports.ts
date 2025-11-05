@@ -71,6 +71,8 @@ export function useReports() {
     period?: string;
     startDate?: string;
     endDate?: string;
+    accountIds?: string[];
+    categoryIds?: string[];
   }) => {
     try {
       setLoading(true);
@@ -80,6 +82,8 @@ export function useReports() {
       if (params?.period) searchParams.append('period', params.period);
       if (params?.startDate) searchParams.append('startDate', params.startDate);
       if (params?.endDate) searchParams.append('endDate', params.endDate);
+      if (params?.accountIds?.length) searchParams.append('accountIds', params.accountIds.join(','));
+      if (params?.categoryIds?.length) searchParams.append('categoryIds', params.categoryIds.join(','));
 
       const response = await fetch(`/api/reports?${searchParams}`);
       
@@ -138,6 +142,19 @@ export function useReports() {
     fetchReports({ startDate, endDate });
   };
 
+  const getReportsWithFilters = (filters: {
+    dateRange?: { from?: Date; to?: Date };
+    accountIds?: string[];
+    categoryIds?: string[];
+  }) => {
+    return fetchReports({
+      startDate: filters.dateRange?.from?.toISOString().split('T')[0],
+      endDate: filters.dateRange?.to?.toISOString().split('T')[0],
+      accountIds: filters.accountIds,
+      categoryIds: filters.categoryIds
+    });
+  };
+
   return {
     reportData,
     loading,
@@ -145,5 +162,6 @@ export function useReports() {
     refreshReports,
     getReportsForPeriod,
     getReportsForDateRange,
+    getReportsWithFilters,
   };
 }

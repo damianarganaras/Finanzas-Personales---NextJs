@@ -201,7 +201,7 @@ export default function CreateTransactionPage() {
   };
 
   // Filtrar cuentas según el tipo
-  const assetAccounts = filterAccountsByType(accounts, 'asset');
+  const assetAccounts = filterAccountsByType(accounts || [], 'asset');
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -369,7 +369,7 @@ export default function CreateTransactionPage() {
                 <div className="text-center py-4">
                   <p className="text-sm text-gray-500">No se encontraron cuentas de activos.</p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Total de cuentas: {accounts.length} | Cuentas de activos: {assetAccounts.length}
+                    Total de cuentas: {accounts?.length || 0} | Cuentas de activos: {assetAccounts.length}
                   </p>
                   <Link href="/accounts/create" className="text-blue-600 hover:text-blue-800 text-sm">
                     Crear nueva cuenta

@@ -127,7 +127,7 @@ export function DashboardMetrics({ className }: DashboardMetricsProps) {
   ];
 
   return (
-    <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 ${className}`}>
+    <div className={`grid gap-4 md:grid-cols-2 lg:grid-cols-4 ${className}`} data-testid="financial-metrics">
       {metricsData.map((metric, index) => (
         <MetricCard key={index} {...metric} />
       ))}

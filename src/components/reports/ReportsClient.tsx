@@ -7,11 +7,33 @@ import { IncomeChart } from '@/components/reports/IncomeChart';
 import { CategoryBreakdown } from '@/components/reports/CategoryBreakdown';
 import { ReportFilters } from '@/components/reports/ReportFilters';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export function ReportsClient() {
-  const { reportData, loading, error, getReportsForPeriod } = useReports();
+  const { reportData, loading, error, getReportsForPeriod, getReportsWithFilters } = useReports();
   const [period, setPeriod] = useState<'7' | '30' | '90' | '365'>('30');
+  const searchParams = useSearchParams();
+
+  // Monitor URL changes and apply filters
+  useEffect(() => {
+    const dateFrom = searchParams.get('dateFrom');
+    const dateTo = searchParams.get('dateTo');
+    const accountIds = searchParams.get('accounts')?.split(',').filter(Boolean) || [];
+    const categoryIds = searchParams.get('categories')?.split(',').filter(Boolean) || [];
+
+    // If filters are present in URL, use them
+    if (dateFrom || dateTo || accountIds.length > 0 || categoryIds.length > 0) {
+      getReportsWithFilters({
+        dateRange: {
+          from: dateFrom ? new Date(dateFrom) : undefined,
+          to: dateTo ? new Date(dateTo) : undefined,
+        },
+        accountIds,
+        categoryIds,
+      });
+    }
+  }, [searchParams, getReportsWithFilters]);
 
   const onChangePeriod = (value: string) => {
     const v = (value as '7' | '30' | '90' | '365');

@@ -60,6 +60,7 @@ export function DeleteAccountButton({ account, transactionCount }: DeleteAccount
           variant="outline" 
           disabled={isDisabled || isDeleting}
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
+          data-testid="delete-account-trigger"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           Eliminar
@@ -91,6 +92,7 @@ export function DeleteAccountButton({ account, transactionCount }: DeleteAccount
               onClick={handleDelete}
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700"
+              data-testid="delete-account-confirm"
             >
               {isDeleting ? 'Eliminando...' : 'Eliminar'}
             </AlertDialogAction>

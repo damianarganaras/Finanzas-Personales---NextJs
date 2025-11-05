@@ -21,7 +21,7 @@ interface BillFormProps {
 
 export function BillForm({ onClose, onSuccess, bill }: BillFormProps) {
   const { createBill, updateBill } = useBills();
-  const { categories } = useCategories();
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
   const createCategory = useCreateCategory();
   const [isLoading, setIsLoading] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
@@ -181,7 +181,16 @@ export function BillForm({ onClose, onSuccess, bill }: BillFormProps) {
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories && categories.length > 0 ? (
+                  {categoriesLoading ? (
+                    <div className="px-2 py-1 text-sm text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin inline mr-1" />
+                      Cargando categorías...
+                    </div>
+                  ) : categoriesError ? (
+                    <div className="px-2 py-1 text-sm text-red-600">
+                      Error: {categoriesError}
+                    </div>
+                  ) : categories && categories.length > 0 ? (
                     categories.map((category: any) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
@@ -189,7 +198,7 @@ export function BillForm({ onClose, onSuccess, bill }: BillFormProps) {
                     ))
                   ) : (
                     <div className="px-2 py-1 text-sm text-muted-foreground">
-                      No hay categorías aún
+                      No hay categorías disponibles
                     </div>
                   )}
                 </SelectContent>

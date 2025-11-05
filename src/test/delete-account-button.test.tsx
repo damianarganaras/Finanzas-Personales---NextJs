@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
+import { Prisma } from '@prisma/client';
 import { DeleteAccountButton } from '@/components/accounts/delete-account-button';
 import type { Account } from '@/types';
 
@@ -58,7 +59,7 @@ const mockAccount: Account = {
   name: 'Cuenta Principal',
   accountTypeId: 'type-1',
   currencyId: 'curr-1',
-  virtualBalance: 1000,
+  virtualBalance: new Prisma.Decimal(1000),
   iban: 'ES1234567890',
   active: true,
   userId: 'user-1',
@@ -83,13 +84,17 @@ describe('DeleteAccountButton', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    cleanup();
+  });
+
   it('debe renderizar el botón habilitado cuando no hay transacciones', () => {
     render(
       <DeleteAccountButton account={mockAccount} transactionCount={0} />,
       { wrapper: createWrapper() }
     );
 
-    const button = screen.getByRole('button', { name: /eliminar/i });
+    const button = screen.getByTestId('delete-account-trigger');
     expect(button).toBeInTheDocument();
     expect(button).not.toBeDisabled();
   });
@@ -100,7 +105,7 @@ describe('DeleteAccountButton', () => {
       { wrapper: createWrapper() }
     );
 
-    const button = screen.getByRole('button', { name: /eliminar/i });
+    const button = screen.getByTestId('delete-account-trigger');
     expect(button).toBeInTheDocument();
     expect(button).toBeDisabled();
   });
@@ -144,12 +149,12 @@ describe('DeleteAccountButton', () => {
     );
 
     // Abrir diálogo
-    const button = screen.getByRole('button', { name: /eliminar/i });
+    const button = screen.getByTestId('delete-account-trigger');
     fireEvent.click(button);
 
     // Confirmar eliminación
     await waitFor(() => {
-      const confirmButton = screen.getByRole('button', { name: /eliminar/i });
+      const confirmButton = screen.getByTestId('delete-account-confirm');
       fireEvent.click(confirmButton);
     });
 
@@ -170,13 +175,13 @@ describe('DeleteAccountButton', () => {
     );
 
     // Abrir diálogo
-    const button = screen.getByRole('button', { name: /eliminar/i });
-    fireEvent.click(button);
+    const buttons = screen.getAllByTestId('delete-account-trigger');
+    fireEvent.click(buttons[0]);
 
     // Confirmar eliminación
     await waitFor(() => {
-      const confirmButton = screen.getByRole('button', { name: /eliminar/i });
-      fireEvent.click(confirmButton);
+      const confirmButtons = screen.getAllByTestId('delete-account-confirm');
+      fireEvent.click(confirmButtons[0]);
     });
 
     await waitFor(() => {

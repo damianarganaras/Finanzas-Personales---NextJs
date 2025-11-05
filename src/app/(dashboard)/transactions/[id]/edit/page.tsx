@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ArrowLeft, Save, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
+import { filterAccountsByType } from '@/lib/account-types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -238,9 +239,7 @@ export default function EditTransactionPage() {
   }
 
   // Filtrar cuentas según el tipo
-  const assetAccounts = accounts.filter(account => 
-    account.accountType.type === 'asset'
-  );
+  const assetAccounts = filterAccountsByType(accounts || [], 'asset');
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">

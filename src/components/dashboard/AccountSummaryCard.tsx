@@ -74,7 +74,7 @@ export function AccountSummaryCard({ className }: AccountSummaryCardProps) {
   const netWorth = assetTotal - liabilityTotal;
 
   return (
-    <Card className={className}>
+    <Card className={className} data-testid="account-summary">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Resumen de Cuentas</CardTitle>

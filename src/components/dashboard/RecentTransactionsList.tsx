@@ -93,7 +93,7 @@ export function RecentTransactionsList({ className, limit = 5 }: RecentTransacti
   }
 
   return (
-    <Card className={className}>
+    <Card className={className} data-testid="recent-transactions">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Transacciones Recientes</CardTitle>

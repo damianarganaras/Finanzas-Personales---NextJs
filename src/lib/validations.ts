@@ -21,7 +21,7 @@ export const accountSchema = z.object({
   virtualBalance: z.number().optional(),
   iban: z.string().optional(),
   active: z.boolean(),
-  currencyId: z.string().min(1, 'La moneda es requerida'),
+  currencyId: z.string().optional(),
 });
 
 export const transactionSchema = z.object({
@@ -31,8 +31,8 @@ export const transactionSchema = z.object({
   date: z.date(),
   sourceAccountId: z.string().optional(),
   destinationAccountId: z.string().optional(),
-  categoryIds: z.array(z.string()),
-  tagIds: z.array(z.string()),
+  categoryIds: z.array(z.string()).default([]),
+  tagIds: z.array(z.string()).default([]),
   notes: z.string().optional(),
 }).refine((data) => {
   if (data.type === 'withdrawal' && !data.sourceAccountId) {
@@ -47,6 +47,7 @@ export const transactionSchema = z.object({
   return true;
 }, {
   message: "Debe seleccionar las cuentas apropiadas según el tipo de transacción",
+  path: ["sourceAccountId", "destinationAccountId"],
 });
 
 export const categorySchema = z.object({
