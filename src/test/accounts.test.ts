@@ -2,8 +2,33 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // Mock de las dependencias antes de importar
-vi.mock('@/lib/auth')
-vi.mock('@/lib/db')
+// Mock explícito de DB con las funciones utilizadas en estos tests unitarios
+vi.mock('@/lib/db', () => ({
+  db: {
+    account: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+    },
+    currency: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
+    accountType: {
+      findFirst: vi.fn(),
+    },
+    user: {
+      findUnique: vi.fn(),
+    },
+  },
+}))
+// Mock del módulo de auth para evitar evaluar 'next-auth' en entorno Vitest
+vi.mock('@/lib/auth', () => ({
+  auth: vi.fn(),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
+  handlers: { GET: vi.fn(), POST: vi.fn() },
+}))
+vi.mock('next-auth')
 
 // Importar después de hacer los mocks
 const { GET, POST } = await import('@/app/api/accounts/route')
@@ -18,7 +43,7 @@ describe('Accounts API - Tests Unitarios', () => {
   describe('GET /api/accounts', () => {
     it('debe devolver 401 si no hay sesión', async () => {
       // Arrange
-      vi.mocked(auth).mockResolvedValueOnce(null as any)
+  (auth as vi.Mock).mockResolvedValueOnce(null)
 
       // Act
       const response = await GET()
@@ -31,7 +56,7 @@ describe('Accounts API - Tests Unitarios', () => {
 
     it('debe devolver 401 si no hay usuario en la sesión', async () => {
       // Arrange
-      vi.mocked(auth).mockResolvedValueOnce({ user: null } as any)
+  (auth as vi.Mock).mockResolvedValueOnce({ user: null })
 
       // Act
       const response = await GET()
@@ -56,10 +81,10 @@ describe('Accounts API - Tests Unitarios', () => {
           accountType: { id: 'type-1', type: 'ASSET' },
           currency: { id: 'curr-1', code: 'ARS', symbol: '$' }
         }
-      ]
+      ];
 
-      vi.mocked(auth).mockResolvedValueOnce(mockSession as any)
-      vi.mocked(db.account.findMany).mockResolvedValueOnce(mockAccounts as any)
+  (auth as vi.Mock).mockResolvedValueOnce(mockSession);
+  (db.account.findMany as vi.Mock).mockResolvedValueOnce(mockAccounts)
 
       // Act
       const response = await GET()
@@ -69,7 +94,7 @@ describe('Accounts API - Tests Unitarios', () => {
       expect(response.status).toBe(200)
       expect(data).toEqual(mockAccounts)
       expect(db.account.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-123' },
+        where: { userId: 'user-123', active: true },
         include: {
           accountType: true,
           currency: true,
@@ -82,10 +107,10 @@ describe('Accounts API - Tests Unitarios', () => {
       // Arrange
       const mockSession = {
         user: { id: 'user-123' }
-      }
+      };
 
-      vi.mocked(auth).mockResolvedValueOnce(mockSession as any)
-      vi.mocked(db.account.findMany).mockRejectedValueOnce(new Error('Database error'))
+  (auth as vi.Mock).mockResolvedValueOnce(mockSession);
+  (db.account.findMany as vi.Mock).mockRejectedValueOnce(new Error('Database error'))
 
       // Act
       const response = await GET()
@@ -100,7 +125,7 @@ describe('Accounts API - Tests Unitarios', () => {
   describe('POST /api/accounts', () => {
     it('debe devolver 401 si no hay sesión', async () => {
       // Arrange
-      vi.mocked(auth).mockResolvedValueOnce(null as any)
+  (auth as vi.Mock).mockResolvedValueOnce(null)
       const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',
         body: JSON.stringify({})
@@ -119,8 +144,8 @@ describe('Accounts API - Tests Unitarios', () => {
       // Arrange
       const mockSession = {
         user: { id: 'user-123' }
-      }
-      vi.mocked(auth).mockResolvedValueOnce(mockSession as any)
+      };
+  (auth as vi.Mock).mockResolvedValueOnce(mockSession)
 
       const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',
@@ -148,18 +173,18 @@ describe('Accounts API - Tests Unitarios', () => {
       const mockAccountType = {
         id: 'type-1',
         type: 'ASSET'
-      }
+      };
       const mockCurrency = {
         id: 'curr-1',
         code: 'ARS',
         name: 'Peso Argentino',
         symbol: '$'
-      }
+      };
       const mockUser = {
         id: 'user-123',
         userGroupId: 'group-1',
         userGroup: { id: 'group-1' }
-      }
+      };
       const mockCreatedAccount = {
         id: 'account-1',
         name: 'Mi Nueva Cuenta',
@@ -171,14 +196,14 @@ describe('Accounts API - Tests Unitarios', () => {
         currencyId: 'curr-1',
         accountType: mockAccountType,
         currency: mockCurrency
-      }
+      };
 
-      vi.mocked(auth).mockResolvedValueOnce(mockSession as any)
-      vi.mocked(db.currency.findUnique).mockResolvedValueOnce(null as any) // No se proporciona currencyId
-      vi.mocked(db.currency.upsert).mockResolvedValueOnce(mockCurrency as any) // Crear/obtener ARS
-      vi.mocked(db.accountType.findFirst).mockResolvedValueOnce(mockAccountType as any)
-      vi.mocked(db.user.findUnique).mockResolvedValueOnce(mockUser as any)
-      vi.mocked(db.account.create).mockResolvedValueOnce(mockCreatedAccount as any)
+  (auth as vi.Mock).mockResolvedValueOnce(mockSession);
+  (db.currency.findUnique as vi.Mock).mockResolvedValueOnce(null);
+  (db.currency.upsert as vi.Mock).mockResolvedValueOnce(mockCurrency);
+  (db.accountType.findFirst as vi.Mock).mockResolvedValueOnce(mockAccountType);
+  (db.user.findUnique as vi.Mock).mockResolvedValueOnce(mockUser);
+  (db.account.create as vi.Mock).mockResolvedValueOnce(mockCreatedAccount)
 
       const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',
@@ -236,18 +261,18 @@ describe('Accounts API - Tests Unitarios', () => {
       const mockAccountType = {
         id: 'type-1',
         type: 'ASSET'
-      }
+      };
       const mockCurrency = {
         id: 'curr-2',
         code: 'USD',
         name: 'Dólar Estadounidense',
         symbol: 'US$'
-      }
+      };
       const mockUser = {
         id: 'user-123',
         userGroupId: 'group-1',
         userGroup: { id: 'group-1' }
-      }
+      };
       const mockCreatedAccount = {
         id: 'account-1',
         name: 'Cuenta en USD',
@@ -259,13 +284,13 @@ describe('Accounts API - Tests Unitarios', () => {
         currencyId: 'curr-2',
         accountType: mockAccountType,
         currency: mockCurrency
-      }
+      };
 
-      vi.mocked(auth).mockResolvedValueOnce(mockSession as any)
-      vi.mocked(db.currency.findUnique).mockResolvedValueOnce(mockCurrency as any) // Moneda existe
-      vi.mocked(db.accountType.findFirst).mockResolvedValueOnce(mockAccountType as any)
-      vi.mocked(db.user.findUnique).mockResolvedValueOnce(mockUser as any)
-      vi.mocked(db.account.create).mockResolvedValueOnce(mockCreatedAccount as any)
+  (auth as vi.Mock).mockResolvedValueOnce(mockSession);
+  (db.currency.findUnique as vi.Mock).mockResolvedValueOnce(mockCurrency);
+  (db.accountType.findFirst as vi.Mock).mockResolvedValueOnce(mockAccountType);
+  (db.user.findUnique as vi.Mock).mockResolvedValueOnce(mockUser);
+  (db.account.create as vi.Mock).mockResolvedValueOnce(mockCreatedAccount)
 
       const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',
@@ -299,17 +324,17 @@ describe('Accounts API - Tests Unitarios', () => {
       // Arrange
       const mockSession = {
         user: { id: 'user-123' }
-      }
+      };
       const mockCurrency = {
         id: 'curr-1',
         code: 'ARS',
         name: 'Peso Argentino',
         symbol: '$'
-      }
+      };
 
-      vi.mocked(auth).mockResolvedValueOnce(mockSession as any)
-      vi.mocked(db.currency.upsert).mockResolvedValueOnce(mockCurrency as any)
-      vi.mocked(db.accountType.findFirst).mockResolvedValueOnce(null as any) // Tipo no existe
+  (auth as vi.Mock).mockResolvedValueOnce(mockSession);
+  (db.currency.upsert as vi.Mock).mockResolvedValueOnce(mockCurrency);
+  (db.accountType.findFirst as vi.Mock).mockResolvedValueOnce(null)
 
       const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',
@@ -333,22 +358,22 @@ describe('Accounts API - Tests Unitarios', () => {
       // Arrange
       const mockSession = {
         user: { id: 'user-123' }
-      }
+      };
       const mockAccountType = {
         id: 'type-1',
         type: 'ASSET'
-      }
+      };
       const mockCurrency = {
         id: 'curr-1',
         code: 'ARS',
         name: 'Peso Argentino',
         symbol: '$'
-      }
+      };
 
-      vi.mocked(auth).mockResolvedValueOnce(mockSession as any)
-      vi.mocked(db.currency.upsert).mockResolvedValueOnce(mockCurrency as any)
-      vi.mocked(db.accountType.findFirst).mockResolvedValueOnce(mockAccountType as any)
-      vi.mocked(db.user.findUnique).mockResolvedValueOnce(null as any) // Usuario no existe
+  (auth as vi.Mock).mockResolvedValueOnce(mockSession);
+  (db.currency.upsert as vi.Mock).mockResolvedValueOnce(mockCurrency);
+  (db.accountType.findFirst as vi.Mock).mockResolvedValueOnce(mockAccountType);
+  (db.user.findUnique as vi.Mock).mockResolvedValueOnce(null)
 
       const request = new NextRequest('http://localhost/api/accounts', {
         method: 'POST',

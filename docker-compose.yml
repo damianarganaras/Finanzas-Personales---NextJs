@@ -9,9 +9,11 @@ services:
       - /app/node_modules
     ports:
       - "3000:3000"
+    # ESTA LÍNEA ES NUEVA:
+    # Le dice a 'app' que espere a que 'db' esté "healthy"
     depends_on:
-      - db
-    # 'app' SÍ usa env_file para leer .env.docker (aunque ahora es redundante, no hace daño)
+      db:
+        condition: service_healthy
     env_file:
       - .env.docker
 
@@ -20,17 +22,19 @@ services:
     image: mysql:8.0
     restart: always
     ports:
-      - "3306:3306" # Mapeo de puertos
-    #
-    # ⬇️ ESTA ES LA CORRECCIÓN CRÍTICA ⬇️
-    # Hemos escrito las variables directamente aquí.
-    # Ya no usamos ${...} ni env_file para este servicio.
-    #
+      - "3306:3306" # Puerto corregido
     environment:
       MYSQL_ROOT_PASSWORD: "R00tP@ssw0rd31415"
       MYSQL_DATABASE: "FinanzaPersonales_db"
     volumes:
       - mysql_data:/var/lib/mysql
+    # ESTE BLOQUE ES NUEVO:
+    # Le enseña a Docker cómo saber si MySQL está vivo
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--silent", "-u", "root", "-pR00tP@ssw0rd31415"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   mysql_data:

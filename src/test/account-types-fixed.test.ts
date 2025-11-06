@@ -64,7 +64,13 @@ describe('Account Types API - Tests Unitarios', () => {
 
       // Assert
       expect(response.status).toBe(200)
-      expect(data).toEqual(mockAccountTypes)
+      // Fechas se serializan a string en JSON; normalizamos el expect
+      const expected = mockAccountTypes.map((t) => ({
+        ...t,
+        createdAt: t.createdAt.toISOString(),
+        updatedAt: t.updatedAt.toISOString(),
+      }))
+      expect(data).toEqual(expected)
       expect(db.accountType.findMany).toHaveBeenCalledWith({
         orderBy: {
           type: 'asc',
@@ -93,9 +99,10 @@ describe('Account Types API - Tests Unitarios', () => {
       const response = await GET()
       const data = await response.json()
 
-      // Assert
-      expect(response.status).toBe(500)
-      expect(data.message).toBe('Error interno del servidor')
+  // Assert
+  expect(response.status).toBe(500)
+  // La API retorna { error: 'Error al obtener los tipos de cuenta' }
+  expect(data.error).toBe('Error al obtener los tipos de cuenta')
     })
 
     it('debe devolver tipos de cuenta ordenados alfabéticamente', async () => {

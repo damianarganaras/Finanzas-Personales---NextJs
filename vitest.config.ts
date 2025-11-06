@@ -12,6 +12,16 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // Excluir tests de Playwright (E2E)
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.next/**',
+      '**/e2e/**',
+      '**/*.spec.ts', // Archivos de Playwright
+      '**/*.spec.tsx',
+    ],
     // Configuración para tests unitarios
     pool: 'threads',
     poolOptions: {

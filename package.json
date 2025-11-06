@@ -9,7 +9,6 @@
     "lint": "next lint",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts",
     "db:seed-complete": "tsx prisma/seed-complete.ts",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -23,7 +22,13 @@
     "test:setup": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-test-db.ps1",
     "test:setup-bash": "bash ./scripts/setup-test-db.sh",
     "db:test-reset": "DATABASE_URL=\"mysql://root:R00tP@ssw0rd31415@db:3306/firefly_test\" npx prisma migrate reset --force --skip-generate --skip-seed",
-    "db:normalize": "tsx scripts/normalize-data.ts"
+    "db:normalize": "tsx scripts/normalize-data.ts",
+    "postinstall": "prisma generate",
+    "db:init": "docker-compose exec app npx prisma migrate dev --name 'init'",
+    "db:seed": "docker-compose exec app npm run db:seed-complete",
+    "db:test": "docker-compose exec app npm run db:test-reset",
+    "test:ci": "docker-compose exec app npm test",
+    "setup:project": "npm run db:init && npm run db:seed && npm run db:test && npm run test:ci"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

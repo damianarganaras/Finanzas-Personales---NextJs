@@ -2,6 +2,36 @@ import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 import { PrismaClient } from '@prisma/client'
 
+// Mock global de next-auth (resolver el error de 'next/server' y 'handlers')
+vi.mock('next-auth', () => ({
+  default: vi.fn(() => ({
+    handlers: {
+      GET: vi.fn(),
+      POST: vi.fn(),
+    },
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    auth: vi.fn(() => Promise.resolve({
+      user: {
+        id: 'mock-user-id',
+        email: 'test@example.com',
+        name: 'Test User',
+        userGroupId: 'mock-group-id',
+      },
+      expires: '2099-12-31T23:59:59.999Z',
+    })),
+  })),
+  auth: vi.fn(() => Promise.resolve({
+    user: {
+      id: 'mock-user-id',
+      email: 'test@example.com',
+      name: 'Test User',
+      userGroupId: 'mock-group-id',
+    },
+    expires: '2099-12-31T23:59:59.999Z',
+  })),
+}))
+
 // Mock global de fetch
 global.fetch = vi.fn()
 
@@ -43,7 +73,17 @@ vi.mock('next-auth/react', () => ({
 
 // Mock de la función auth
 vi.mock('@/lib/auth', () => ({
-  auth: vi.fn()
+  auth: vi.fn(() => Promise.resolve({
+    user: {
+      id: 'mock-user-id',
+      email: 'test@example.com',
+      name: 'Test User',
+      userGroupId: 'mock-group-id',
+    },
+    expires: '2099-12-31T23:59:59.999Z',
+  })),
+  signIn: vi.fn(),
+  signOut: vi.fn(),
 }))
 
 // Mock de Prisma Client para tests unitarios
