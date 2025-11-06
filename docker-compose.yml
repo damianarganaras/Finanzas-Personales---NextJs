@@ -1,0 +1,36 @@
+services:
+  # Servicio de la aplicación Next.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    # 'app' SÍ usa env_file para leer .env.docker (aunque ahora es redundante, no hace daño)
+    env_file:
+      - .env.docker
+
+  # Servicio de la base de datos MySQL
+  db:
+    image: mysql:8.0
+    restart: always
+    ports:
+      - "3306:3306" # Mapeo de puertos
+    #
+    # ⬇️ ESTA ES LA CORRECCIÓN CRÍTICA ⬇️
+    # Hemos escrito las variables directamente aquí.
+    # Ya no usamos ${...} ni env_file para este servicio.
+    #
+    environment:
+      MYSQL_ROOT_PASSWORD: "R00tP@ssw0rd31415"
+      MYSQL_DATABASE: "FinanzaPersonales_db"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

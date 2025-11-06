@@ -12,13 +12,13 @@ Quiero visualizar el mapa completo del sistema y sus tecnologías, y mapeado tam
 
 ### Analysis Summary
 
-# Mapa del Sistema Firefly-Next
+# Mapa del Sistema Finanzas Personales - Nextjs
 
-Este informe detalla la arquitectura, tecnologías y funcionamiento del sistema Firefly-Next, una aplicación de gestión financiera personal construida con Next.js.
+Este informe detalla la arquitectura, tecnologías y funcionamiento del sistema Finanzas Personales - Nextjs, una aplicación de gestión financiera personal construida con Next.js.
 
 ## Arquitectura de Alto Nivel
 
-El sistema Firefly-Next sigue una arquitectura de aplicación web de pila completa (full-stack) utilizando el framework [Next.js](next.config.ts). Se compone principalmente de tres capas interconectadas:
+El sistema Finanzas Personales - Nextjs sigue una arquitectura de aplicación web de pila completa (full-stack) utilizando el framework [Next.js](next.config.ts). Se compone principalmente de tres capas interconectadas:
 
 1.  **Capa de Presentación (Frontend):** Desarrollada con [React](package.json) y [Next.js](next.config.ts), responsable de la interfaz de usuario y la interacción con el usuario.
 2.  **Capa de Lógica de Negocio y API (Backend):** Implementada mediante [API Routes de Next.js](src/app/api/), que exponen endpoints para la comunicación con el frontend y encapsulan la lógica de negocio.
@@ -116,7 +116,7 @@ El directorio [scripts/](scripts/) contiene scripts de utilidad para el desarrol
 *   [**fix-account-types.ts**](scripts/fix-account-types.ts) / [**migrate-account-types.ts**](scripts/migrate-account-types.ts): Scripts para la migración o corrección de tipos de cuenta.
 *   [**init-currencies.ts**](scripts/init-currencies.ts): Script para inicializar datos de monedas.
 
-Este mapa proporciona una visión general del sistema Firefly-Next, sus componentes y cómo interactúan para ofrecer la funcionalidad de gestión financiera.
+Este mapa proporciona una visión general del sistema Finanzas Personales - Nextjs, sus componentes y cómo interactúan para ofrecer la funcionalidad de gestión financiera.
 
 ---
 

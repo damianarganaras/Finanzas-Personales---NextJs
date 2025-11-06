@@ -1,0 +1,26 @@
+# Dependencias
+node_modules
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache de Next.js y builds
+.next
+
+# Git
+.git
+
+# Archivos de entorno (nunca deben estar en la imagen)
+.env.local
+.env.test
+.env.docker
+
+# Reportes de Playwright/Tests
+test-results/
+playwright-report/
+
+# Archivos de SO
+.DS_Store
+Thumbs.db

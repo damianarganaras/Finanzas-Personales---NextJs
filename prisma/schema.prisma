@@ -72,7 +72,7 @@ model Account {
   updatedAt      DateTime @updatedAt
 
   accountType  AccountType   @relation(fields: [accountTypeId], references: [id])
-  user         User          @relation(fields: [userId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   currency     Currency      @relation(fields: [currencyId], references: [id])
   transactions Transaction[]
   creditCards  CreditCard[]
@@ -145,7 +145,7 @@ model Category {
   name   String
   userId String
 
-  user         User                  @relation(fields: [userId], references: [id])
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions TransactionCategory[]
   budgets      BudgetCategory[]
   bills        Bill[]
@@ -174,7 +174,7 @@ model Tag {
   name   String
   userId String
 
-  user         User             @relation(fields: [userId], references: [id])
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions TransactionTag[]
 
   @@index([userId, name])
@@ -202,7 +202,7 @@ model Budget {
   active Boolean @default(true)
   userId String
 
-  user       User             @relation(fields: [userId], references: [id])
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   limits     BudgetLimit[]
   categories BudgetCategory[]
 
@@ -250,7 +250,7 @@ model Bill {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user        User         @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   category    Category?    @relation(fields: [categoryId], references: [id])
   attachments Attachment[]
 
@@ -269,7 +269,7 @@ model PiggyBank {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("piggy_banks")
 }
@@ -281,7 +281,7 @@ model Rule {
   active Boolean @default(true)
   userId String
 
-  user     User          @relation(fields: [userId], references: [id])
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   triggers RuleTrigger[]
   actions  RuleAction[]
 
@@ -325,7 +325,7 @@ model Attachment {
   transactionId String?
   billId        String?
 
-  user        User         @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
   bill        Bill?        @relation(fields: [billId], references: [id], onDelete: SetNull)
 
@@ -347,7 +347,7 @@ model SavingGoal {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  user          User                 @relation(fields: [userId], references: [id])
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   contributions SavingContribution[]
 
   @@map("saving_goals")
@@ -381,7 +381,7 @@ model CreditCard {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user      User                 @relation(fields: [userId], references: [id])
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   account   Account              @relation(fields: [accountId], references: [id])
   purchases CreditCardPurchase[]
 
